@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seguimiento de Carga Dividida</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f4f4f4;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .shipment-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+
+        .shipment-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            font-size: 0.9em;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        .in-transit {
+            background: #e0f7fa;
+            color: #006064;
+        }
+
+        .returned {
+            background: #ffe0b2;
+            color: #e65100;
+        }
+
+        .parent-id {
+            font-style: italic;
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Seguimiento de Carga Dividida</h2>
+        <p><strong>Carga original:</strong> Pedido #CARGO-2025-001</p>
+        <p>
+            <strong>Volumen total:</strong> 85 m³ (excede la capacidad del
+            contenedor)
+        </p>
+        <p class="parent-id">
+            Carga dividida: ID raíz <strong>CARGO-2025-001</strong>
+        </p>
+
+        <div class="shipment-card">
+            <div class="shipment-header">
+                Parte 1 - Subcarga ID: CARGO-2025-001-A
+            </div>
+            <p>Volumen: 68 m³</p>
+            <p>Estado: <span class="status in-transit">Embarcada</span></p>
+            <p>Contenedor: CNT-001</p>
+        </div>
+
+        <div class="shipment-card">
+            <div class="shipment-header">
+                Parte 2 - Subcarga ID: CARGO-2025-001-B
+            </div>
+            <p>Volumen: 17 m³</p>
+            <p>Estado: <span class="status returned">Devuelta a bodega</span></p>
+            <p>Contenedor: No asignado</p>
+        </div>
+    </div>
+
+    <script>
+        // Simulación de los datos
+        const cargaPadre = {
+            id: "CARGO-2025-001",
+            volumenTotal: 85,
+            capacidadContenedor: 68,
+            subcargas: [
+                {
+                    id: "CARGO-2025-001-A",
+                    volumen: 68,
+                    estado: "Embarcada",
+                    contenedor: "CNT-001",
+                },
+                {
+                    id: "CARGO-2025-001-B",
+                    volumen: 17,
+                    estado: "Devuelta a bodega",
+                    contenedor: null,
+                },
+            ],
+        };
+
+        // Aquí podrías conectar este script a un backend o a una API para obtener los datos dinámicamente
+    </script>
+</body>
+
+</html>
