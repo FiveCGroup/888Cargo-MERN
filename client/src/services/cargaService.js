@@ -190,6 +190,47 @@ class CargaService {
             };
         }
     }
+
+    /**
+     * Buscar packing lists por código de carga
+     * @param {string} codigoCarga - Código de carga para buscar
+     * @returns {Promise} - Lista de packing lists que coinciden
+     */
+    async buscarPackingList(codigoCarga) {
+        try {
+            const response = await API.get(`/api/carga/buscar/${encodeURIComponent(codigoCarga)}`);
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            console.error('Error al buscar packing list:', error);
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al buscar el packing list'
+            };
+        }
+    }
+
+    /**
+     * Obtener todas las cargas con información básica para búsqueda
+     * @returns {Promise} - Lista de todas las cargas
+     */
+    async obtenerTodasLasCargas() {
+        try {
+            const response = await API.get('/api/carga/todas');
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            console.error('Error al obtener todas las cargas:', error);
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener las cargas'
+            };
+        }
+    }
 }
 
 export default new CargaService();

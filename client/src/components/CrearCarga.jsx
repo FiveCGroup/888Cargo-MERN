@@ -14,6 +14,11 @@ const CrearCarga = () => {
         totalFilas: 0
     });
     
+    // Estados para búsqueda de packing lists
+    const [resultadosBusqueda, setResultadosBusqueda] = useState([]);
+    const [mostrandoResultados, setMostrandoResultados] = useState(false);
+    const [busquedaLoading, setBusquedaLoading] = useState(false);
+    
     // Nuevos estados para el formulario de información
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [infoCliente, setInfoCliente] = useState({
@@ -69,6 +74,78 @@ const CrearCarga = () => {
     const volverAlDashboard = () => {
         navigate('/dashboard');
     };
+
+    // =============== FUNCIONES DE BÚSQUEDA ===============
+    
+    const handleBuscarPackingList = async () => {
+        if (!codigoCarga.trim()) {
+            setError('Ingrese un código de carga para buscar');
+            return;
+        }
+
+        setBusquedaLoading(true);
+        setError(null);
+        
+        try {
+            const resultado = await cargaService.buscarPackingList(codigoCarga.trim());
+            
+            if (resultado.success && resultado.data && resultado.data.length > 0) {
+                setResultadosBusqueda(resultado.data);
+                setMostrandoResultados(true);
+                console.log('🔍 Resultados de búsqueda:', resultado.data);
+            } else {
+                setError(resultado.mensaje || 'No se encontraron packing lists con ese código');
+                setResultadosBusqueda([]);
+                setMostrandoResultados(false);
+            }
+        } catch (error) {
+            console.error('Error en búsqueda:', error);
+            setError('Error al buscar packing lists');
+            setResultadosBusqueda([]);
+            setMostrandoResultados(false);
+        }
+        
+        setBusquedaLoading(false);
+    };
+
+    const handleVerDetallesPackingList = async (idCarga) => {
+        try {
+            const resultado = await cargaService.obtenerPackingList(idCarga);
+            
+            if (resultado.success) {
+                // Mostrar los detalles en una ventana modal o expandir la información
+                console.log('📦 Detalles del packing list:', resultado.data);
+                alert(`Packing List cargado:\n\nCódigo: ${resultado.data.codigo_carga}\nArtículos: ${resultado.data.articulos?.length || 0}\nTotal: $${resultado.data.precio_total || 0}`);
+            } else {
+                setError('Error al obtener detalles del packing list');
+            }
+        } catch (error) {
+            console.error('Error al obtener detalles:', error);
+            setError('Error al cargar detalles del packing list');
+        }
+    };
+
+    const limpiarBusqueda = () => {
+        setResultadosBusqueda([]);
+        setMostrandoResultados(false);
+        setCodigoCarga('');
+        setError(null);
+    };
+
+    const formatearMoneda = (valor) => {
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0
+        }).format(valor);
+    };
+
+    const formatearFecha = (fecha) => {
+        if (!fecha) return 'N/A';
+        return new Date(fecha).toLocaleDateString('es-CO');
+    };
+
+    // =============== FIN FUNCIONES DE BÚSQUEDA ===============
 
     const handleFileUpload = async (e) => {
         const file = e.target.files[0];
@@ -312,30 +389,127 @@ const CrearCarga = () => {
             <button onClick={volverAlDashboard}>Volver al Dashboard</button>
             
             <div>
-                {/* Campo para ingresar el código de carga manualmente */}
-                <div>
-                    <label>
-                        Código de Carga:&nbsp;
-                        <input
-                            type="text"
-                            value={codigoCarga}
-                            onChange={e => setCodigoCarga(e.target.value)}
-                            placeholder="Ingrese el código de carga"
-                        />
-                    </label>
-                </div>
-                <div>
-                    <button onClick={handleDescargarFormato} disabled={loading}>
-                        {loading ? 'Descargando...' : 'Descargar formato packing list'}
-                    </button>
-                    <button onClick={handleUploadClick} disabled={loading}>
-                        {loading ? 'Procesando...' : 'Subir packing list'}
-                    </button>
-                    {datosExcel.length > 0 && (
-                        <>
-                            <button onClick={handleGuardarCarga} disabled={loading || !codigoCarga}>
-                                {loading ? 'Guardando...' : 'Guardar Carga (Antigua estructura)'}
+                {/* Sección de búsqueda de packing lists */}
+                <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '5px' }}>
+                    <h3>🔍 Buscar Packing Lists Existentes</h3>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+                        <label>
+                            Código de Carga:&nbsp;
+                            <input
+                                type="text"
+                                value={codigoCarga}
+                                onChange={e => setCodigoCarga(e.target.value)}
+                                placeholder="Ingrese código para buscar..."
+                                style={{ padding: '5px', minWidth: '200px' }}
+                                onKeyPress={(e) => e.key === 'Enter' && handleBuscarPackingList()}
+                            />
+                        </label>
+                        <button 
+                            onClick={handleBuscarPackingList} 
+                            disabled={busquedaLoading || !codigoCarga.trim()}
+                            style={{ 
+                                backgroundColor: '#007bff', 
+                                color: 'white', 
+                                padding: '5px 15px', 
+                                border: 'none', 
+                                borderRadius: '3px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {busquedaLoading ? 'Buscando...' : '🔍 Buscar'}
+                        </button>
+                        {mostrandoResultados && (
+                            <button 
+                                onClick={limpiarBusqueda}
+                                style={{ 
+                                    backgroundColor: '#6c757d', 
+                                    color: 'white', 
+                                    padding: '5px 15px', 
+                                    border: 'none', 
+                                    borderRadius: '3px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                ✕ Limpiar
                             </button>
+                        )}
+                    </div>
+                    
+                    {/* Mostrar resultados de búsqueda */}
+                    {mostrandoResultados && resultadosBusqueda.length > 0 && (
+                        <div style={{ marginTop: '15px' }}>
+                            <h4>📦 Packing Lists Encontrados ({resultadosBusqueda.length})</h4>
+                            {resultadosBusqueda.map((packing, index) => (
+                                <div key={packing.id_carga} style={{ 
+                                    border: '1px solid #e9ecef', 
+                                    borderRadius: '5px', 
+                                    padding: '15px', 
+                                    margin: '10px 0',
+                                    backgroundColor: '#f8f9fa'
+                                }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                        <div>
+                                            <strong>📋 Código:</strong> {packing.codigo_carga}<br/>
+                                            <strong>👤 Cliente:</strong> {packing.cliente?.nombre_cliente || 'N/A'}<br/>
+                                            <strong>📧 Email:</strong> {packing.cliente?.correo_cliente || 'N/A'}<br/>
+                                            <strong>📞 Teléfono:</strong> {packing.cliente?.telefono_cliente || 'N/A'}
+                                        </div>
+                                        <div>
+                                            <strong>📅 Fecha Inicio:</strong> {formatearFecha(packing.fecha_inicio)}<br/>
+                                            <strong>📅 Fecha Fin:</strong> {formatearFecha(packing.fecha_fin)}<br/>
+                                            <strong>🌍 Destino:</strong> {packing.ciudad_destino || 'N/A'}<br/>
+                                            <strong>📄 Archivo:</strong> {packing.archivo_original || 'N/A'}
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ marginTop: '10px', padding: '10px', backgroundColor: 'white', borderRadius: '3px' }}>
+                                        <strong>📊 Estadísticas:</strong><br/>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '5px', fontSize: '0.9em' }}>
+                                            <span>📦 Artículos: {packing.estadisticas?.articulos_creados || 0}</span>
+                                            <span>📋 Total items: {packing.estadisticas?.total_articulos || 0}</span>
+                                            <span>💰 Valor: {formatearMoneda(packing.estadisticas?.precio_total_carga || 0)}</span>
+                                            <span>📐 CBM: {(packing.estadisticas?.cbm_total || 0).toFixed(2)}</span>
+                                            <span>⚖️ Peso: {(packing.estadisticas?.peso_total || 0).toFixed(2)} kg</span>
+                                            <span>📦 Cajas: {packing.estadisticas?.total_cajas || 0}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ marginTop: '10px', textAlign: 'right' }}>
+                                        <button 
+                                            onClick={() => handleVerDetallesPackingList(packing.id_carga)}
+                                            style={{ 
+                                                backgroundColor: '#28a745', 
+                                                color: 'white', 
+                                                padding: '5px 15px', 
+                                                border: 'none', 
+                                                borderRadius: '3px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            👁️ Ver Detalles
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Sección de creación de nuevo packing list */}
+                <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '5px' }}>
+                    <h3>📝 Crear Nuevo Packing List</h3>
+                    <div>
+                        <button onClick={handleDescargarFormato} disabled={loading}>
+                            {loading ? 'Descargando...' : 'Descargar formato packing list'}
+                        </button>
+                        <button onClick={handleUploadClick} disabled={loading}>
+                            {loading ? 'Procesando...' : 'Subir packing list'}
+                        </button>
+                        {datosExcel.length > 0 && (
+                            <>
+                                <button onClick={handleGuardarCarga} disabled={loading || !codigoCarga}>
+                                    {loading ? 'Guardando...' : 'Guardar Carga (Antigua estructura)'}
+                                </button>
                             <button 
                                 onClick={handleMostrarFormulario} 
                                 disabled={loading}
@@ -353,6 +527,7 @@ const CrearCarga = () => {
                             </button>
                         </>
                     )}
+                </div>
                 </div>
                 
                 <input

@@ -203,4 +203,84 @@ export class PackingListModel {
         const result = await get(sql, params);
         return result.count === 0;
     }
+    
+    // ================== MÉTODOS DE BÚSQUEDA ==================
+    
+    static async buscarCargasPorCodigo(codigo_carga) {
+        const sql = `
+            SELECT 
+                c.id_carga,
+                c.codigo_carga,
+                c.fecha_inicio,
+                c.fecha_fin,
+                c.ciudad_destino,
+                c.archivo_original,
+                c.fecha_creacion,
+                cl.id_cliente,
+                cl.nombre_cliente,
+                cl.correo_cliente,
+                cl.telefono_cliente,
+                cl.ciudad_cliente,
+                cl.pais_cliente
+            FROM carga c
+            LEFT JOIN cliente cl ON c.id_cliente = cl.id_cliente
+            WHERE c.codigo_carga LIKE ?
+            ORDER BY c.fecha_creacion DESC
+        `;
+        
+        return await query(sql, [`%${codigo_carga}%`]);
+    }
+    
+    static async obtenerTodasLasCargas() {
+        const sql = `
+            SELECT 
+                c.id_carga,
+                c.codigo_carga,
+                c.fecha_inicio,
+                c.fecha_fin,
+                c.ciudad_destino,
+                c.archivo_original,
+                c.fecha_creacion,
+                cl.id_cliente,
+                cl.nombre_cliente,
+                cl.correo_cliente,
+                cl.telefono_cliente,
+                cl.ciudad_cliente,
+                cl.pais_cliente
+            FROM carga c
+            LEFT JOIN cliente cl ON c.id_cliente = cl.id_cliente
+            ORDER BY c.fecha_creacion DESC
+        `;
+        
+        return await query(sql);
+    }
+    
+    static async obtenerEstadisticasCarga(id_carga) {
+        const sql = `
+            SELECT 
+                COUNT(apl.id_articulo) as total_articulos,
+                SUM(apl.precio_total) as precio_total_carga,
+                SUM(apl.cbm) as cbm_total,
+                SUM(apl.gw) as peso_total,
+                COALESCE(SUM(cj.cantidad_en_caja), 0) as total_cajas
+            FROM articulo_packing_list apl
+            LEFT JOIN caja cj ON apl.id_articulo = cj.id_articulo
+            WHERE apl.id_carga = ?
+        `;
+        
+        const result = await get(sql, [id_carga]);
+        return result || {
+            total_articulos: 0,
+            precio_total_carga: 0,
+            cbm_total: 0,
+            peso_total: 0,
+            total_cajas: 0
+        };
+    }
+    
+    static async contarArticulosCarga(id_carga) {
+        const sql = `SELECT COUNT(*) as count FROM articulo_packing_list WHERE id_carga = ?`;
+        const result = await get(sql, [id_carga]);
+        return result.count || 0;
+    }
 }

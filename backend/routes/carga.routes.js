@@ -739,4 +739,120 @@ router.get('/imagen/:id_articulo', async (req, res) => {
     }
 });
 
+// Ruta para buscar packing lists por código de carga
+router.get("/buscar/:codigo_carga", authRequired, async (req, res) => {
+    try {
+        const { codigo_carga } = req.params;
+        
+        console.log(`🔍 Buscando packing list con código: ${codigo_carga}`);
+        
+        // Buscar cargas que coincidan con el código (búsqueda parcial)
+        const cargas = await PackingListModel.buscarCargasPorCodigo(codigo_carga);
+        
+        if (!cargas || cargas.length === 0) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'No se encontraron packing lists con ese código' 
+            });
+        }
+        
+        // Para cada carga, obtener estadísticas y información completa
+        const resultados = [];
+        for (const carga of cargas) {
+            const estadisticas = await PackingListModel.obtenerEstadisticasCarga(carga.id_carga);
+            const articulosCount = await PackingListModel.contarArticulosCarga(carga.id_carga);
+            
+            resultados.push({
+                id_carga: carga.id_carga,
+                codigo_carga: carga.codigo_carga,
+                fecha_inicio: carga.fecha_inicio,
+                fecha_fin: carga.fecha_fin,
+                ciudad_destino: carga.ciudad_destino,
+                archivo_original: carga.archivo_original,
+                cliente: {
+                    id_cliente: carga.id_cliente,
+                    nombre_cliente: carga.nombre_cliente,
+                    correo_cliente: carga.correo_cliente,
+                    telefono_cliente: carga.telefono_cliente
+                },
+                estadisticas: {
+                    articulos_creados: articulosCount,
+                    total_articulos: estadisticas.total_articulos || 0,
+                    precio_total_carga: estadisticas.precio_total_carga || 0,
+                    cbm_total: estadisticas.cbm_total || 0,
+                    peso_total: estadisticas.peso_total || 0,
+                    total_cajas: estadisticas.total_cajas || 0
+                }
+            });
+        }
+        
+        console.log(`✅ Encontradas ${resultados.length} cargas`);
+        
+        res.json({
+            success: true,
+            data: resultados,
+            mensaje: `Se encontraron ${resultados.length} packing list(s) con el código "${codigo_carga}"`
+        });
+        
+    } catch (error) {
+        console.error('Error al buscar packing lists:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
+// Ruta para obtener todas las cargas con información básica
+router.get("/todas", authRequired, async (req, res) => {
+    try {
+        console.log('📋 Obteniendo todas las cargas');
+        
+        const cargas = await PackingListModel.obtenerTodasLasCargas();
+        
+        if (!cargas || cargas.length === 0) {
+            return res.json({
+                success: true,
+                data: [],
+                mensaje: 'No hay packing lists guardados'
+            });
+        }
+        
+        // Agregar estadísticas a cada carga
+        const cargasConEstadisticas = [];
+        for (const carga of cargas) {
+            const estadisticas = await PackingListModel.obtenerEstadisticasCarga(carga.id_carga);
+            const articulosCount = await PackingListModel.contarArticulosCarga(carga.id_carga);
+            
+            cargasConEstadisticas.push({
+                ...carga,
+                estadisticas: {
+                    articulos_creados: articulosCount,
+                    total_articulos: estadisticas.total_articulos || 0,
+                    precio_total_carga: estadisticas.precio_total_carga || 0,
+                    cbm_total: estadisticas.cbm_total || 0,
+                    peso_total: estadisticas.peso_total || 0,
+                    total_cajas: estadisticas.total_cajas || 0
+                }
+            });
+        }
+        
+        console.log(`✅ Obtenidas ${cargasConEstadisticas.length} cargas`);
+        
+        res.json({
+            success: true,
+            data: cargasConEstadisticas
+        });
+        
+    } catch (error) {
+        console.error('Error al obtener todas las cargas:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
 export default router;
