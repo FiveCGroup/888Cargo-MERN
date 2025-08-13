@@ -740,9 +740,16 @@ router.get('/imagen/:id_articulo', async (req, res) => {
 });
 
 // Ruta para buscar packing lists por código de carga
-router.get("/buscar/:codigo_carga", authRequired, async (req, res) => {
+router.get("/buscar/:codigo_carga", async (req, res) => {
     try {
         const { codigo_carga } = req.params;
+        
+        // Prevenir caching del navegador
+        res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        });
         
         console.log(`🔍 Buscando packing list con código: ${codigo_carga}`);
         
@@ -788,10 +795,12 @@ router.get("/buscar/:codigo_carga", authRequired, async (req, res) => {
         
         console.log(`✅ Encontradas ${resultados.length} cargas`);
         
-        res.json({
+        // Forzar status 200 y agregar timestamp para evitar cache
+        res.status(200).json({
             success: true,
             data: resultados,
-            mensaje: `Se encontraron ${resultados.length} packing list(s) con el código "${codigo_carga}"`
+            mensaje: `Se encontraron ${resultados.length} packing list(s) con el código "${codigo_carga}"`,
+            timestamp: new Date().toISOString()
         });
         
     } catch (error) {
@@ -805,8 +814,15 @@ router.get("/buscar/:codigo_carga", authRequired, async (req, res) => {
 });
 
 // Ruta para obtener todas las cargas con información básica
-router.get("/todas", authRequired, async (req, res) => {
+router.get("/todas", async (req, res) => {
     try {
+        // Prevenir caching del navegador
+        res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        });
+        
         console.log('📋 Obteniendo todas las cargas');
         
         const cargas = await PackingListModel.obtenerTodasLasCargas();
@@ -840,9 +856,11 @@ router.get("/todas", authRequired, async (req, res) => {
         
         console.log(`✅ Obtenidas ${cargasConEstadisticas.length} cargas`);
         
-        res.json({
+        // Forzar status 200 y agregar timestamp para evitar cache
+        res.status(200).json({
             success: true,
-            data: cargasConEstadisticas
+            data: cargasConEstadisticas,
+            timestamp: new Date().toISOString()
         });
         
     } catch (error) {

@@ -199,10 +199,21 @@ class CargaService {
     async buscarPackingList(codigoCarga) {
         try {
             const response = await API.get(`/api/carga/buscar/${encodeURIComponent(codigoCarga)}`);
-            return {
-                success: true,
-                data: response.data
-            };
+            console.log('🔍 Respuesta del servidor:', response.data);
+            
+            // El servidor devuelve { success: true, data: [...], mensaje: "..." }
+            if (response.data.success) {
+                return {
+                    success: true,
+                    data: response.data.data,
+                    mensaje: response.data.mensaje
+                };
+            } else {
+                return {
+                    success: false,
+                    error: response.data.mensaje || 'No se encontraron resultados'
+                };
+            }
         } catch (error) {
             console.error('Error al buscar packing list:', error);
             return {
@@ -219,10 +230,20 @@ class CargaService {
     async obtenerTodasLasCargas() {
         try {
             const response = await API.get('/api/carga/todas');
-            return {
-                success: true,
-                data: response.data
-            };
+            console.log('📋 Respuesta del servidor (todas):', response.data);
+            
+            // El servidor devuelve { success: true, data: [...] }
+            if (response.data.success) {
+                return {
+                    success: true,
+                    data: response.data.data
+                };
+            } else {
+                return {
+                    success: false,
+                    error: response.data.mensaje || 'No se encontraron cargas'
+                };
+            }
         } catch (error) {
             console.error('Error al obtener todas las cargas:', error);
             return {

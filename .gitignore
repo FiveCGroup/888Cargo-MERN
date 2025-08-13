@@ -57,3 +57,14 @@ coverage/
 
 # nyc test coverage
 .nyc_output
+
+# Archivos obsoletos de Supabase/PostgreSQL (eliminados permanentemente)
+supabase-api.js
+supabase-setup-guide.js
+SUPABASE_SETUP.md
+test-connection-pg.js
+test-connection-supabase.js
+test-supabase.js
+backend/examples/
+backend/models/user.supabase.model.js
+LOCAL_POSTGRES_SETUP.md
