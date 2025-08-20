@@ -79,6 +79,26 @@ class CargaService {
             return { success: false, error: 'Error al obtener el packing list' };
         }
     }
+
+    async descargarFormato() {
+        try {
+            // Descargar directamente desde public/downloads
+            const link = document.createElement('a');
+            link.href = '/downloads/FORMATO_PACKING_LIST.xlsx';
+            link.download = 'FORMATO_PACKING_LIST.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            return { success: true };
+        } catch (error) {
+            console.error('Error al descargar formato:', error);
+            return {
+                success: false,
+                error: 'Error al descargar el formato'
+            };
+        }
+    }
 }
 
 export default new CargaService();
