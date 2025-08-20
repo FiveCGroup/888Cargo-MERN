@@ -76,6 +76,15 @@ export default defineConfig(({ mode }) => {
         }
       })() : [])
     ],
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:4000',
+          changeOrigin: true,
+          secure: false
+        }
+      }
+    },
     build: {
       // Configuración adicional para producción
       minify: isProduction ? 'terser' : false,
