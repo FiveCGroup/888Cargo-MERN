@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 const FormularioPackingList = ({ 
     mostrarFormulario,
@@ -9,14 +9,50 @@ const FormularioPackingList = ({
     onCerrar,
     onGuardar,
     onGenerarCodigo,
-    guardandoBD 
+    guardandoBD,
+    guardadoExitoso,
+    datosGuardado,
+    onDescargarPDF 
 }) => {
+    const [datosAutocompletados, setDatosAutocompletados] = useState(false);
+
+    // Efecto para mostrar indicador cuando los datos se autocompletar
+    useEffect(() => {
+        if (mostrarFormulario && (infoCliente.nombre_cliente || infoCliente.correo_cliente)) {
+            setDatosAutocompletados(true);
+            // Ocultar el indicador después de 3 segundos
+            const timer = setTimeout(() => {
+                setDatosAutocompletados(false);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [mostrarFormulario, infoCliente.nombre_cliente, infoCliente.correo_cliente]);
+
     if (!mostrarFormulario) return null;
 
     return (
         <div>
             <div>
                 <h2>Información del Packing List</h2>
+                
+                {/* Indicador de autocompletado */}
+                {datosAutocompletados && (
+                    <div style={{
+                        padding: '8px 12px',
+                        backgroundColor: '#d4edda',
+                        border: '1px solid #c3e6cb',
+                        borderRadius: '4px',
+                        color: '#155724',
+                        fontSize: '14px',
+                        marginBottom: '15px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}>
+                        <span>✅</span>
+                        <span>Datos del cliente autocompletados desde tu perfil</span>
+                    </div>
+                )}
                 
                 {/* Información del Cliente */}
                 <div>
@@ -30,42 +66,40 @@ const FormularioPackingList = ({
                                 value={infoCliente.nombre_cliente}
                                 onChange={onCambioCliente}
                                 required
+                                placeholder="Nombre completo del cliente"
                             />
                         </div>
                         <div>
-                            <label>Correo Electrónico</label>
+                            <label>Correo Electrónico *</label>
                             <input
                                 type="email"
                                 name="correo_cliente"
                                 value={infoCliente.correo_cliente}
                                 onChange={onCambioCliente}
+                                required
+                                placeholder="correo@ejemplo.com"
                             />
                         </div>
                         <div>
-                            <label>Teléfono</label>
+                            <label>Teléfono *</label>
                             <input
                                 type="text"
                                 name="telefono_cliente"
                                 value={infoCliente.telefono_cliente}
                                 onChange={onCambioCliente}
+                                required
+                                placeholder="+1234567890"
                             />
                         </div>
                         <div>
-                            <label>Ciudad</label>
-                            <input
-                                type="text"
-                                name="ciudad_cliente"
-                                value={infoCliente.ciudad_cliente}
+                            <label>Dirección de Entrega de Mercancía *</label>
+                            <textarea
+                                name="direccion_entrega"
+                                value={infoCliente.direccion_entrega}
                                 onChange={onCambioCliente}
-                            />
-                        </div>
-                        <div>
-                            <label>País</label>
-                            <input
-                                type="text"
-                                name="pais_cliente"
-                                value={infoCliente.pais_cliente}
-                                onChange={onCambioCliente}
+                                required
+                                placeholder="Dirección completa donde se recogerá la mercancía"
+                                rows="2"
                             />
                         </div>
                     </div>
@@ -73,10 +107,10 @@ const FormularioPackingList = ({
 
                 {/* Información de la Carga */}
                 <div>
-                    <h3>Información de la Carga</h3>
+                    <h3>Información del Packing List</h3>
                     <div>
                         <div>
-                            <label>Código de Carga *</label>
+                            <label>Código del Packing List *</label>
                             <div>
                                 <input
                                     type="text"
@@ -84,46 +118,84 @@ const FormularioPackingList = ({
                                     value={infoCarga.codigo_carga}
                                     onChange={onCambioCarga}
                                     required
+                                    placeholder="Código único del packing list"
                                 />
                                 <button
                                     type="button"
                                     onClick={onGenerarCodigo}
                                     title="Generar nuevo código único"
                                 >
-                                    Nuevo
+                                    Generar Código
                                 </button>
                             </div>
                         </div>
                         <div>
-                            <label>Ciudad Destino</label>
-                            <input
-                                type="text"
-                                name="ciudad_destino"
-                                value={infoCarga.ciudad_destino}
-                                onChange={onCambioCarga}
-                            />
-                        </div>
-                        <div>
-                            <label>Fecha de Inicio *</label>
-                            <input
-                                type="date"
-                                name="fecha_inicio"
-                                value={infoCarga.fecha_inicio}
+                            <label>Dirección de Destino *</label>
+                            <textarea
+                                name="direccion_destino"
+                                value={infoCarga.direccion_destino}
                                 onChange={onCambioCarga}
                                 required
-                            />
-                        </div>
-                        <div>
-                            <label>Fecha de Fin</label>
-                            <input
-                                type="date"
-                                name="fecha_fin"
-                                value={infoCarga.fecha_fin}
-                                onChange={onCambioCarga}
+                                placeholder="Dirección completa donde se entregará la mercancía"
+                                rows="2"
                             />
                         </div>
                     </div>
                 </div>
+
+                {/* Mensaje de éxito y botón de descarga */}
+                {guardadoExitoso && datosGuardado && (
+                    <div style={{
+                        padding: '15px',
+                        backgroundColor: '#d1ecf1',
+                        border: '1px solid #bee5eb',
+                        borderRadius: '4px',
+                        color: '#0c5460',
+                        marginBottom: '15px',
+                        textAlign: 'center'
+                    }}>
+                        <h4 style={{ margin: '0 0 10px 0', color: '#0c5460' }}>
+                            ✅ ¡Packing List guardado exitosamente!
+                        </h4>
+                        <p style={{ margin: '0 0 15px 0', fontSize: '14px' }}>
+                            Se han generado {datosGuardado.totalQRs} códigos QR para las cajas
+                        </p>
+                        {datosGuardado.pdfUrl && (
+                            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                                <button
+                                    onClick={onDescargarPDF}
+                                    style={{
+                                        backgroundColor: '#28a745',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '10px 20px',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    📄 Descargar PDF con QRs
+                                </button>
+                                <button
+                                    onClick={onCerrar}
+                                    style={{
+                                        backgroundColor: '#007bff',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '10px 20px',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    📋 Crear Nuevo Packing List
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Botones */}
                 <div>

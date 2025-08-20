@@ -4,9 +4,14 @@ import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import fs from "fs";
 import path from "path";
+import QRCode from "qrcode";
 import { authRequired } from "../middlewares/validateToken.js";
 import * as articuloModel from "../models/articulosPL.model.js";
 import { PackingListModel } from "../models/packingList.model.js";
+import { createCarga } from "../models/carga.model.js";
+import { createCajasForArticulo } from "../models/caja.model.js";
+import { createQRForCaja, updateQRImage } from "../models/qr.model.js";
+import { query, run, get } from "../db.js";
 
 const router = Router();
 
@@ -17,6 +22,19 @@ const upload = multer({ storage });
 const imageDir = path.join(process.cwd(), 'uploads', 'images');
 if (!fs.existsSync(imageDir)) {
     fs.mkdirSync(imageDir, { recursive: true });
+}
+
+// Crear directorio para QRs si no existe
+const QR_IMAGES_DIR = path.join(process.cwd(), 'uploads', 'qr-codes');
+if (!fs.existsSync(QR_IMAGES_DIR)) {
+    fs.mkdirSync(QR_IMAGES_DIR, { recursive: true });
+}
+
+// Función para asegurar que existe el directorio de QRs
+async function ensureQRDirectory() {
+    if (!fs.existsSync(QR_IMAGES_DIR)) {
+        fs.mkdirSync(QR_IMAGES_DIR, { recursive: true });
+    }
 }
 
 // Función para extraer imágenes del Excel
@@ -869,6 +887,329 @@ router.get("/todas", async (req, res) => {
             success: false,
             error: 'Error interno del servidor',
             details: error.message 
+        });
+    }
+});
+
+// Nuevo endpoint integrado: Guardar Packing List + Generar QRs automáticamente
+router.post("/guardar-con-qr", async (req, res) => {
+    try {
+        const { 
+            datosExcel, 
+            infoCliente, 
+            infoCarga 
+        } = req.body;
+
+        console.log('🚀 Iniciando proceso integrado de guardado con QR...');
+        console.log('📋 Info Cliente:', infoCliente);
+        console.log('📦 Info Carga:', infoCarga);
+
+        // Validar datos requeridos
+        if (!datosExcel || !Array.isArray(datosExcel) || datosExcel.length < 2) {
+            return res.status(400).json({
+                success: false,
+                message: "Datos de Excel insuficientes"
+            });
+        }
+
+        if (!infoCliente?.nombre_cliente || !infoCliente?.correo_cliente || !infoCliente?.telefono_cliente || !infoCliente?.direccion_entrega) {
+            return res.status(400).json({
+                success: false,
+                message: "Información del cliente incompleta (nombre, correo, teléfono y dirección de entrega son obligatorios)"
+            });
+        }
+
+        if (!infoCarga?.codigo_carga || !infoCarga?.direccion_destino) {
+            return res.status(400).json({
+                success: false,
+                message: "Información de carga incompleta (código y dirección de destino son obligatorios)"
+            });
+        }
+
+        // === PASO 1: CREAR/OBTENER CLIENTE ===
+        console.log('👤 Procesando cliente...');
+        let clienteId;
+        
+        // Verificar si el cliente ya existe por correo
+        const clienteExistente = await get(
+            'SELECT * FROM cliente WHERE correo_cliente = ?',
+            [infoCliente.correo_cliente]
+        );
+
+        if (clienteExistente) {
+            clienteId = clienteExistente.id_cliente;
+            console.log(`✅ Cliente existente encontrado: ${clienteId}`);
+            
+            // Actualizar información del cliente
+            await run(`
+                UPDATE cliente 
+                SET nombre_cliente = ?, telefono_cliente = ?, direccion_entrega = ?, updated_at = datetime('now')
+                WHERE id_cliente = ?
+            `, [infoCliente.nombre_cliente, infoCliente.telefono_cliente, infoCliente.direccion_entrega, clienteId]);
+            
+        } else {
+            // Crear nuevo cliente
+            const resultCliente = await run(`
+                INSERT INTO cliente (nombre_cliente, correo_cliente, telefono_cliente, direccion_entrega) 
+                VALUES (?, ?, ?, ?)
+            `, [infoCliente.nombre_cliente, infoCliente.correo_cliente, infoCliente.telefono_cliente, infoCliente.direccion_entrega]);
+            
+            clienteId = resultCliente.id;
+            console.log(`✅ Nuevo cliente creado: ${clienteId}`);
+        }
+
+        // === PASO 2: CREAR CARGA ===
+        console.log('📦 Creando carga...');
+        
+        // Verificar que el código de carga sea único
+        const cargaExistente = await get(
+            'SELECT * FROM carga WHERE codigo_carga = ?',
+            [infoCarga.codigo_carga]
+        );
+
+        if (cargaExistente) {
+            return res.status(400).json({
+                success: false,
+                message: `El código de carga "${infoCarga.codigo_carga}" ya existe`
+            });
+        }
+
+        const cargaData = {
+            codigo_carga: infoCarga.codigo_carga,
+            direccion_destino: infoCarga.direccion_destino,
+            archivo_original: infoCarga.archivo_original || 'packing-list.xlsx',
+            id_cliente: clienteId
+        };
+
+        const nuevaCarga = await createCarga(cargaData);
+        console.log(`✅ Carga creada: ${nuevaCarga.id_carga} (${nuevaCarga.codigo_carga})`);
+
+        // === PASO 3: PROCESAR ARTÍCULOS DEL EXCEL ===
+        console.log('📝 Procesando artículos del Excel...');
+        
+        const encabezados = datosExcel[0];
+        const filasArticulos = datosExcel.slice(1);
+        
+        let articulosCreados = 0;
+        let articulosIds = [];
+        let articulosConIndices = []; // Nuevo array para guardar ID y índice de fila original
+        
+        for (let i = 0; i < filasArticulos.length; i++) {
+            try {
+                const fila = filasArticulos[i];
+                
+                // Saltar filas vacías
+                if (!fila || fila.length < 5 || !fila[5]) { // Verificar que al menos tenga REF.ART
+                    continue;
+                }
+
+                // Construir datos del artículo con la estructura de la nueva tabla
+                const articuloData = {
+                    id_carga: nuevaCarga.id_carga,
+                    fecha: fila[0] || null,
+                    cn: fila[5] || null,  // C/N está en columna 5
+                    ref_art: fila[6] || null,  // REF.ART está en columna 6
+                    descripcion_espanol: fila[7] || null,
+                    descripcion_chino: fila[8] || null,
+                    unidad: fila[9] || null,
+                    precio_unidad: parseFloat(fila[10]) || 0,
+                    precio_total: parseFloat(fila[11]) || 0,
+                    material: fila[12] || null,
+                    unidades_empaque: parseInt(fila[13]) || 0,
+                    marca_producto: fila[14] || null,
+                    serial: fila[25] || null,
+                    medida_largo: parseFloat(fila[18]) || 0,
+                    medida_ancho: parseFloat(fila[19]) || 0,
+                    medida_alto: parseFloat(fila[20]) || 0,
+                    cbm: parseFloat(fila[21]) || 0,
+                    gw: parseFloat(fila[23]) || 0,
+                    imagen_url: fila[4] || null,  // PHTO está en columna 4
+                    imagen_data: null,
+                    imagen_nombre: null,
+                    imagen_tipo: null
+                };
+
+                // Insertar artículo en la base de datos
+                const articuloResult = await run(`
+                    INSERT INTO articulo_packing_list (
+                        id_carga, fecha, cn, ref_art, descripcion_espanol, descripcion_chino,
+                        unidad, precio_unidad, precio_total, material, unidades_empaque,
+                        marca_producto, serial, medida_largo, medida_ancho, medida_alto,
+                        cbm, gw, imagen_url, imagen_data, imagen_nombre, imagen_tipo
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [
+                    articuloData.id_carga, articuloData.fecha, articuloData.cn, articuloData.ref_art,
+                    articuloData.descripcion_espanol, articuloData.descripcion_chino, articuloData.unidad,
+                    articuloData.precio_unidad, articuloData.precio_total, articuloData.material,
+                    articuloData.unidades_empaque, articuloData.marca_producto, articuloData.serial,
+                    articuloData.medida_largo, articuloData.medida_ancho, articuloData.medida_alto,
+                    articuloData.cbm, articuloData.gw, articuloData.imagen_url, articuloData.imagen_data,
+                    articuloData.imagen_nombre, articuloData.imagen_tipo
+                ]);
+
+                articulosIds.push(articuloResult.id);
+                articulosConIndices.push({ id: articuloResult.id, filaIndex: i }); // Guardar ID y índice original
+                articulosCreados++;
+                
+                console.log(`  ✅ Artículo ${articulosCreados}: ${articuloData.ref_art} (ID: ${articuloResult.id}, Fila: ${i})`);
+                
+            } catch (error) {
+                console.error(`  ❌ Error procesando artículo ${i + 1}:`, error);
+            }
+        }
+
+        console.log(`✅ Total de artículos creados: ${articulosCreados}`);
+
+        // === PASO 4: GENERAR CAJAS Y QRS AUTOMÁTICAMENTE ===
+        console.log('📦 Generando cajas y QRs automáticamente...');
+        
+        let totalCajasGeneradas = 0;
+        let totalQRsGenerados = 0;
+
+        for (let articuloIndex = 0; articuloIndex < articulosConIndices.length; articuloIndex++) {
+            const articuloInfo = articulosConIndices[articuloIndex];
+            const articuloId = articuloInfo.id;
+            const filaOriginalIndex = articuloInfo.filaIndex;
+            
+            try {
+                // Obtener información del artículo desde los datos originales del Excel
+                const filaArticulo = filasArticulos[filaOriginalIndex]; // Usar el índice original correcto
+                
+                // Mapeo de columnas del Excel
+                const mapeoColumnas = {
+                    fecha: 1,
+                    cn: 2,
+                    ref_art: 3,
+                    descripcion_espanol: 4,
+                    descripcion_chino: 5,
+                    unidad: 6,
+                    precio_unidad: 7,
+                    precio_total: 8,
+                    material: 9,
+                    unidades_empaque: 10,
+                    marca_producto: 11,
+                    cajas: 15,                   // 'CAJAS'
+                    cant_por_caja: 16,           // 'CANT. POR CAJA'
+                    cant_total: 17,              // 'CANT. TOTAL'
+                    medida_largo: 18,            // 'MEDIDA DE CAJA' (Largo)
+                    medida_ancho: 19,            // Ancho (columna siguiente)
+                    medida_alto: 20,             // Alto (columna siguiente)
+                    cbm: 21,                     // 'CBM'
+                    cbm_total: 22,               // 'CBM.TT'
+                    gw: 23,                      // 'G.W.'
+                    gw_total: 24,                // 'G.W.TT'
+                    serial: 25                   // 'Serial'
+                };
+                
+                // Leer número de cajas del Excel
+                const numCajas = parseInt(filaArticulo[mapeoColumnas.cajas]) || 1;
+                const cantPorCaja = parseInt(filaArticulo[mapeoColumnas.cant_por_caja]) || 0;
+                
+                console.log(`  📋 Artículo ${articuloId} (Fila ${filaOriginalIndex}): ${numCajas} cajas, ${cantPorCaja} items por caja`);
+                
+                const cajasCreadas = await createCajasForArticulo(articuloId, numCajas);
+                totalCajasGeneradas += cajasCreadas.length;
+                
+                console.log(`  📦 ${cajasCreadas.length} cajas creadas para artículo ${articuloId}`);
+                
+                // Generar QR para cada caja
+                await ensureQRDirectory();
+                
+                for (const caja of cajasCreadas) {
+                    try {
+                        // Crear QR en la base de datos
+                        const qrCreado = await createQRForCaja(caja.id_caja);
+                        
+                        // Obtener información del artículo para el QR
+                        const articuloCompleto = await get(
+                            "SELECT * FROM articulo_packing_list WHERE id_articulo = ?",
+                            [articuloId]
+                        );
+                        
+                        // Datos para mostrar en el QR
+                        const qrInfo = {
+                            codigo: qrCreado.codigo_qr,
+                            caja: `${caja.numero_caja} de ${caja.total_cajas}`,
+                            articulo: articuloCompleto.ref_art || "Sin referencia",
+                            descripcion: articuloCompleto.descripcion_espanol || "Sin descripción",
+                        };
+
+                        // Texto para el QR (JSON con la información)
+                        const qrText = JSON.stringify(qrInfo);
+
+                        // Nombre del archivo de imagen
+                        const fileName = `qr-${qrCreado.codigo_qr}.png`;
+                        const imagePath = path.join(QR_IMAGES_DIR, fileName);
+
+                        // Generar imagen QR
+                        await QRCode.toFile(imagePath, qrText, {
+                            width: 300,
+                            margin: 2,
+                            color: {
+                                dark: "#000000",
+                                light: "#FFFFFF",
+                            },
+                        });
+
+                        // Actualizar la base de datos con la ruta de la imagen
+                        await updateQRImage(qrCreado.id_qr, `/uploads/qr-codes/${fileName}`);
+                        
+                        totalQRsGenerados++;
+                        console.log(`  🏷️  QR generado: ${qrCreado.codigo_qr}`);
+                    } catch (qrError) {
+                        console.error(`  ❌ Error generando QR para caja ${caja.id_caja}:`, qrError);
+                    }
+                }
+                
+            } catch (error) {
+                console.error(`  ❌ Error generando cajas/QRs para artículo ${articuloId}:`, error);
+            }
+        }
+
+        // === PASO 5: CALCULAR ESTADÍSTICAS FINALES ===
+        console.log('📊 Calculando estadísticas...');
+        
+        const estadisticas = {
+            cliente_id: clienteId,
+            carga_id: nuevaCarga.id_carga,
+            codigo_carga: nuevaCarga.codigo_carga,
+            articulos_creados: articulosCreados,
+            cajas_generadas: totalCajasGeneradas,
+            qrs_generados: totalQRsGenerados,
+            fecha_creacion: nuevaCarga.fecha_creacion
+        };
+
+        console.log('🎉 Proceso completado exitosamente!');
+        console.log('📊 Estadísticas finales:', estadisticas);
+
+        // === RESPUESTA FINAL ===
+        res.json({
+            success: true,
+            message: "Packing List guardado y QRs generados exitosamente",
+            data: {
+                cliente: {
+                    id: clienteId,
+                    nombre: infoCliente.nombre_cliente,
+                    correo: infoCliente.correo_cliente
+                },
+                carga: {
+                    id: nuevaCarga.id_carga,
+                    codigo: nuevaCarga.codigo_carga,
+                    direccion_destino: infoCarga.direccion_destino
+                },
+                estadisticas: estadisticas,
+                pdfDisponible: true,
+                pdfUrl: `/api/qr/pdf-carga/${nuevaCarga.id_carga}`,
+                siguientePaso: `PDF con QRs disponible en: GET /api/qr/pdf-carga/${nuevaCarga.id_carga}`
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Error en proceso integrado:', error);
+        res.status(500).json({
+            success: false,
+            message: "Error interno del servidor",
+            error: error.message
         });
     }
 });

@@ -8,4 +8,4 @@ export const DB_CONFIG = {
   ssl: { rejectUnauthorized: false }
 };
 
-export const PORT = process.env.PORT || 4000;
+export const PORT = process.env.PORT || 3000;

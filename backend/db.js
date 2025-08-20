@@ -66,18 +66,26 @@ export const initializeDatabase = async () => {
     
     // Verificar si necesitamos recrear las tablas
     try {
-      // Intentar consultar la estructura de la tabla articulo_packing_list
+      // Verificar la estructura actual de las tablas
       const resultAPL = await query("PRAGMA table_info(articulo_packing_list)");
       const tieneImagenData = resultAPL.some(col => col.name === 'imagen_data');
       
-      // Verificar también la tabla carga
       const resultCarga = await query("PRAGMA table_info(carga)");
       const tieneCodigoCarga = resultCarga.some(col => col.name === 'codigo_carga');
       
-      if (!tieneCodigoCarga || !tieneImagenData) {
-        console.log('🔄 Recreando tablas con nueva estructura (columnas de imagen agregadas)...');
+      // Verificar si la tabla caja tiene los nuevos campos
+      const resultCaja = await query("PRAGMA table_info(caja)");
+      const tieneTotalCajas = resultCaja.some(col => col.name === 'total_cajas');
+      
+      // Verificar si existe la tabla qr
+      const tablas = await query("SELECT name FROM sqlite_master WHERE type='table' AND name='qr'");
+      const existeTablaQR = tablas.length > 0;
+      
+      if (!tieneCodigoCarga || !tieneImagenData || !tieneTotalCajas || !existeTablaQR) {
+        console.log('🔄 Actualizando estructura de base de datos (agregando campos QR y total cajas)...');
         
         // Eliminar tablas en el orden correcto (respetando foreign keys)
+        await run(`DROP TABLE IF EXISTS qr`);
         await run(`DROP TABLE IF EXISTS caja`);
         await run(`DROP TABLE IF EXISTS articulo_packing_list`);
         await run(`DROP TABLE IF EXISTS carga`);
@@ -95,6 +103,7 @@ export const initializeDatabase = async () => {
         telefono_cliente TEXT,
         ciudad_cliente TEXT,
         pais_cliente TEXT,
+        direccion_entrega TEXT,
         password TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -109,6 +118,7 @@ export const initializeDatabase = async () => {
         fecha_inicio DATE NOT NULL,
         fecha_fin DATE,
         ciudad_destino TEXT,
+        direccion_destino TEXT,
         archivo_original TEXT,
         fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
         id_cliente INTEGER NOT NULL,
@@ -146,20 +156,43 @@ export const initializeDatabase = async () => {
       )
     `);
 
-    // Crear tabla caja (nueva estructura)
+    // Crear tabla caja (nueva estructura con campos para QR)
     await run(`
       CREATE TABLE IF NOT EXISTS caja (
         id_caja INTEGER PRIMARY KEY AUTOINCREMENT,
         id_articulo INTEGER NOT NULL,
         numero_caja INTEGER NOT NULL,
+        total_cajas INTEGER NOT NULL,
         cantidad_en_caja INTEGER,
         cbm REAL,
         gw REAL,
+        descripcion_contenido TEXT,
+        observaciones TEXT,
+        fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (id_articulo) REFERENCES articulo_packing_list(id_articulo)
       )
     `);
 
-    console.log('✅ Estructura de base de datos lista para Packing List');
+    // Crear tabla qr (nueva tabla para códigos QR)
+    await run(`
+      CREATE TABLE IF NOT EXISTS qr (
+        id_qr INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_caja INTEGER NOT NULL,
+        codigo_qr TEXT NOT NULL UNIQUE,
+        tipo_qr TEXT DEFAULT 'caja',
+        datos_qr TEXT,
+        fecha_generacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+        fecha_impresion DATETIME,
+        estado TEXT DEFAULT 'generado',
+        url_imagen TEXT,
+        formato TEXT DEFAULT 'PNG',
+        tamaño INTEGER DEFAULT 200,
+        nivel_correccion TEXT DEFAULT 'M',
+        FOREIGN KEY (id_caja) REFERENCES caja(id_caja)
+      )
+    `);
+
+    console.log('✅ Estructura de base de datos lista para Packing List con QR');
   } catch (error) {
     console.error('❌ Error al inicializar la base de datos:', error);
     throw error;

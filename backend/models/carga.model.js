@@ -3,15 +3,16 @@ import { query, run, get } from '../db.js';
 // Crear una nueva carga
 export async function createCarga(cargaData) {
   const {
-    numero_carga,
-    id_cliente,
-    estado = 'pendiente'
+    codigo_carga,
+    direccion_destino,
+    archivo_original,
+    id_cliente
   } = cargaData;
 
   try {
     const result = await run(
-      `INSERT INTO carga (numero_carga, id_cliente, estado) VALUES (?, ?, ?)`,
-      [numero_carga, id_cliente, estado]
+      `INSERT INTO carga (codigo_carga, direccion_destino, archivo_original, id_cliente, fecha_inicio) VALUES (?, ?, ?, ?, datetime('now'))`,
+      [codigo_carga, direccion_destino, archivo_original, id_cliente]
     );
     
     // Obtener la carga recién creada
@@ -50,13 +51,13 @@ export async function getCargaById(id_carga) {
   }
 }
 
-// Obtener una carga por su número
-export async function getCargaByNumero(numero_carga) {
+// Obtener una carga por su código
+export async function getCargaByCodigo(codigo_carga) {
   try {
-    const result = await get('SELECT * FROM carga WHERE numero_carga = ?', [numero_carga]);
+    const result = await get('SELECT * FROM carga WHERE codigo_carga = ?', [codigo_carga]);
     return result;
   } catch (error) {
-    console.error('Error al buscar carga por número:', error);
+    console.error('Error al buscar carga por código:', error);
     throw error;
   }
 }
@@ -78,14 +79,15 @@ export async function getCargasByCliente(id_cliente) {
 // Actualizar una carga existente
 export async function updateCarga(id_carga, cargaData) {
   const {
-    numero_carga,
-    estado
+    codigo_carga,
+    direccion_destino,
+    archivo_original
   } = cargaData;
 
   try {
     await run(
-      `UPDATE carga SET numero_carga = ?, estado = ? WHERE id_carga = ?`,
-      [numero_carga, estado, id_carga]
+      `UPDATE carga SET codigo_carga = ?, direccion_destino = ?, archivo_original = ? WHERE id_carga = ?`,
+      [codigo_carga, direccion_destino, archivo_original, id_carga]
     );
     
     // Obtener la carga actualizada

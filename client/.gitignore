@@ -22,3 +22,18 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Build artifacts
+build/
+dist-obfuscated/
+
+# Environment files with sensitive data
+.env.local
+.env.*.local
+
+# Obfuscation temporary files
+*.obfuscated.js
+.obfuscator-cache/
+
+# Source maps (security)
+*.map

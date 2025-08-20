@@ -37,20 +37,36 @@ export const obtenerUrlImagen = (cellValue) => {
     return null;
 };
 
-// Validaciones para el formulario
+// Validaciones para el formulario con nueva estructura
 export const validarFormularioCarga = (infoCliente, infoCarga) => {
     const errores = [];
 
-    if (!infoCliente.nombre_cliente) {
+    // Validaciones del cliente (campos obligatorios)
+    if (!infoCliente.nombre_cliente?.trim()) {
         errores.push('El nombre del cliente es requerido');
     }
     
-    if (!infoCarga.codigo_carga) {
-        errores.push('El código de carga es requerido');
+    if (!infoCliente.correo_cliente?.trim()) {
+        errores.push('El correo electrónico del cliente es requerido');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(infoCliente.correo_cliente)) {
+        errores.push('El correo electrónico no tiene un formato válido');
     }
     
-    if (!infoCarga.fecha_inicio) {
-        errores.push('La fecha de inicio es requerida');
+    if (!infoCliente.telefono_cliente?.trim()) {
+        errores.push('El teléfono del cliente es requerido');
+    }
+    
+    if (!infoCliente.direccion_entrega?.trim()) {
+        errores.push('La dirección de entrega de mercancía es requerida');
+    }
+
+    // Validaciones de la carga (campos obligatorios)
+    if (!infoCarga.codigo_carga?.trim()) {
+        errores.push('El código del packing list es requerido');
+    }
+    
+    if (!infoCarga.direccion_destino?.trim()) {
+        errores.push('La dirección de destino es requerida');
     }
 
     return {
@@ -59,21 +75,22 @@ export const validarFormularioCarga = (infoCliente, infoCarga) => {
     };
 };
 
-// Función para preparar datos del formulario
+// Función para preparar datos del formulario con nueva estructura
 export const prepararDatosFormulario = (datosExcel, archivoSeleccionado) => {
     if (datosExcel.length <= 1) return { cliente: {}, carga: {} };
 
     const primeraFila = datosExcel[1];
     
     const datosCliente = {
-        telefono_cliente: primeraFila[2] || '',
-        ciudad_cliente: primeraFila[3] || ''
+        nombre_cliente: '',
+        correo_cliente: '',
+        telefono_cliente: primeraFila[2] || '', // Tel del Excel si está disponible
+        direccion_entrega: ''
     };
 
     const datosCarga = {
         codigo_carga: generarCodigoUnico(),
-        fecha_inicio: primeraFila[0] ? new Date(primeraFila[0]).toISOString().split('T')[0] : '',
-        ciudad_destino: primeraFila[3] || '',
+        direccion_destino: primeraFila[3] || '', // Ciudad destino del Excel si está disponible
         archivo_original: archivoSeleccionado?.name || ''
     };
 

@@ -10,6 +10,7 @@ import authRoutes from "./routes/auth.routes.js";
 import taskRoutes from "./routes/task.routes.js";
 import recuperacionRoutes from "./routes/recuperacion.routes.js";
 import cargaRoutes from "./routes/carga.routes.js";
+import qrRoutes from "./routes/qr.routes.js";
 
 // Obtener directorio actual
 const __filename = fileURLToPath(import.meta.url);
@@ -37,6 +38,14 @@ app.get('/api/health', (req, res) => {
         timestamp: new Date().toISOString(),
         database: 'SQLite'
     });
+});
+
+// Montar rutas QR PRIMERO para evitar conflictos
+app.use('/api/qr', qrRoutes);
+
+// Agregar una ruta de prueba directamente en app.js para verificar
+app.get('/api/qr-test-direct', (req, res) => {
+    res.json({ message: 'Ruta QR directa funcionando', timestamp: new Date().toISOString() });
 });
 
 app.use('/api', authRoutes);

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCrearCarga } from '../hooks/useCrearCarga';
 import { CargaLogic } from '../logic/cargaLogic';
+import cargaService from '../services/cargaService';
 import BusquedaPackingList from './BusquedaPackingList';
 import CreacionNuevaCarga from './CreacionNuevaCarga';
 import FormularioPackingList from './FormularioPackingList';
@@ -25,6 +26,8 @@ const CrearCarga = () => {
         loading, setLoading,
         error, setError,
         guardandoBD, setGuardandoBD,
+        guardadoExitoso, setGuardadoExitoso,
+        datosGuardado, setDatosGuardado,
         
         // Referencias y funciones
         navigate, fileInputRef,
@@ -60,7 +63,9 @@ const CrearCarga = () => {
     
     const guardadoSetters = {
         setGuardandoBD,
-        setError
+        setError,
+        setGuardadoExitoso,
+        setDatosGuardado
     };
 
     // Funciones de navegación
@@ -98,10 +103,35 @@ const CrearCarga = () => {
 
     const handleCerrarFormulario = () => {
         setMostrarFormulario(false);
+        // Limpiar estados de guardado exitoso cuando se cierra el formulario
+        setGuardadoExitoso(false);
+        setDatosGuardado(null);
+        // Opcional: también limpiar completamente el formulario para un nuevo packing list
+        limpiarFormulario();
     };
 
     const handleGenerarNuevoCodigo = () => {
         CargaLogic.generarNuevoCodigo(setInfoCarga);
+    };
+
+    // Función para descargar PDF de QRs
+    const handleDescargarPDF = async () => {
+        if (datosGuardado && datosGuardado.pdfUrl) {
+            try {
+                // Extraer el ID de la carga de la URL
+                const match = datosGuardado.pdfUrl.match(/\/pdf-carga\/(\d+)$/);
+                const idCarga = match ? match[1] : datosGuardado.carga?.id;
+                
+                if (idCarga) {
+                    await cargaService.descargarPDFQRs(idCarga);
+                } else {
+                    setError('No se pudo obtener el ID de la carga para descargar el PDF.');
+                }
+            } catch (error) {
+                console.error('Error al descargar PDF:', error);
+                setError('Error al descargar el PDF. Inténtalo de nuevo.');
+            }
+        }
     };
 
     // Funciones de guardado
@@ -113,8 +143,10 @@ const CrearCarga = () => {
             guardadoSetters
         );
         
+        // No limpiar el formulario automáticamente para permitir ver el mensaje de éxito
+        // y el botón de descarga del PDF
         if (resultado && resultado.success) {
-            limpiarFormulario();
+            console.log('✅ Guardado exitoso, manteniendo formulario visible para descarga de PDF');
         }
     };
 
@@ -227,6 +259,9 @@ const CrearCarga = () => {
                 onGuardar={handleGuardarEnBD}
                 onGenerarCodigo={handleGenerarNuevoCodigo}
                 guardandoBD={guardandoBD}
+                guardadoExitoso={guardadoExitoso}
+                datosGuardado={datosGuardado}
+                onDescargarPDF={handleDescargarPDF}
             />
         </div>
     );

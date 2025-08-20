@@ -130,7 +130,7 @@ export class CargaLogic {
     // =============== FUNCIONES DE GUARDADO ===============
     
     static async guardarEnBD(datosExcel, infoCliente, infoCarga, setters) {
-        const { setGuardandoBD, setError } = setters;
+        const { setGuardandoBD, setError, setGuardadoExitoso, setDatosGuardado } = setters;
         
         // Validar formulario
         const validacion = validarFormularioCarga(infoCliente, infoCarga);
@@ -141,6 +141,8 @@ export class CargaLogic {
 
         setGuardandoBD(true);
         setError(null);
+        setGuardadoExitoso(false);
+        setDatosGuardado(null);
 
         try {
             const datosCompletos = {
@@ -149,47 +151,39 @@ export class CargaLogic {
                 infoCarga: infoCarga
             };
 
-            const resultado = await cargaService.guardarPackingList(datosCompletos);
+            console.log('🚀 Guardando Packing List con generación automática de QRs...');
+            const resultado = await cargaService.guardarPackingListConQR(datosCompletos);
 
-            console.log('=== DEBUGGING FRONTEND DETALLADO ===');
+            console.log('=== RESPUESTA DEL BACKEND ===');
             console.log('Resultado completo:', resultado);
-            console.log('=== FIN DEBUG FRONTEND ===');
+            console.log('=== FIN RESPUESTA ===');
 
             if (resultado.success) {
                 const { data } = resultado;
                 
-                // Recargar datos desde la base de datos si es necesario
-                if (data && data.id_carga) {
-                    try {
-                        const packingListActualizado = await cargaService.obtenerPackingList(data.id_carga);
-                        if (packingListActualizado.success) {
-                            console.log('📦 Datos actualizados desde BD con imágenes:', packingListActualizado.data);
-                        }
-                    } catch (errorRecarga) {
-                        console.warn('⚠️ No se pudieron recargar los datos actualizados:', errorRecarga);
-                    }
-                }
-                
-                const mensaje = `🎉 Packing List guardado exitosamente!
+                // Preparar datos para el estado
+                const datosParaEstado = {
+                    cliente: data.cliente,
+                    carga: data.carga,
+                    estadisticas: data.estadisticas,
+                    totalQRs: data.estadisticas?.qrs_generados || 0,
+                    pdfUrl: data.pdfUrl || `/api/qr/pdf-carga/${data.carga?.id}` // URL del PDF
+                };
 
-📋 Resumen:
-• Cliente ID: ${data.id_cliente || 'No disponible'}
-• Carga ID: ${data.id_carga || 'No disponible'}  
-• Código de Carga: ${infoCarga.codigo_carga}
-• Artículos creados: ${data.articulos_creados || 0}
-• Errores encontrados: ${data.errores?.length || 0}
-
-✅ Los datos han sido guardados en la base de datos correctamente.`;
+                // Actualizar estados
+                setDatosGuardado(datosParaEstado);
+                setGuardadoExitoso(true);
                 
-                alert(mensaje);
+                console.log('✅ Estados actualizados para mostrar botón de descarga');
+                console.log('📄 Datos guardados:', datosParaEstado);
                 return { success: true };
                 
             } else {
                 console.error('❌ El guardado no fue exitoso. Detalles:', resultado);
                 const errorMsg = resultado.error || resultado.message || 'Error desconocido al guardar';
                 
-                if (errorMsg.includes('código de carga ya existe')) {
-                    setError(`${errorMsg}. Presiona "Generar Nuevo Código" para crear uno automáticamente.`);
+                if (errorMsg.includes('código de carga ya existe') || errorMsg.includes('ya existe')) {
+                    setError(`${errorMsg}. Presiona "Generar Código" para crear uno automáticamente.`);
                 } else {
                     setError(errorMsg);
                 }

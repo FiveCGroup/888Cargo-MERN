@@ -13,9 +13,10 @@ const startServer = async () => {
     await initializeDatabase();
     console.log('✅ Base de datos SQLite inicializada correctamente');
     
-    app.listen(PORT, () => {
+    app.listen(PORT, '127.0.0.1', () => {
       console.log(`✅ Servidor corriendo en el puerto: ${PORT}`);
       console.log(`🗃️ Base de datos: SQLite`);
+      console.log(`🔗 URL del servidor: http://127.0.0.1:${PORT}`);
       console.log(`🔗 URL del servidor: http://localhost:${PORT}`);
     });
   } catch (error) {
