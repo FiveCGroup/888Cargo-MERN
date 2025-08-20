@@ -8,9 +8,10 @@
     "dev:client": "cd client && npm run dev",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "start": "node backend/index.js",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start:client": "cd client && npm run build && npm run preview",
+    "install:all": "npm install && cd client && npm install",
+    "build": "cd client && npm run build",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "keywords": [],
   "author": "",

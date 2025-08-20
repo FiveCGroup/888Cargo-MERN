@@ -4,7 +4,7 @@
 .tabla-container {
     width: 100%;
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: hidden; /* Sin scroll vertical */
     border: 1px solid #ddd;
     border-radius: 8px;
     margin: 20px 0;
@@ -105,17 +105,14 @@
     color: #155724;
 }
 
-/* Indicador de scroll */
-.tabla-container::after {
-    content: "← Desliza horizontalmente para ver más columnas →";
-    position: absolute;
-    bottom: -25px;
-    left: 50%;
-    transform: translateX(-50%);
+/* Leyenda externa - se debe agregar manualmente después del contenedor */
+.tabla-leyenda {
+    text-align: center;
     font-size: 12px;
     color: #6c757d;
     font-style: italic;
-    white-space: nowrap;
+    margin-top: 10px;
+    margin-bottom: 20px;
 }
 
 /* Scroll personalizado */

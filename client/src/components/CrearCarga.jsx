@@ -1,14 +1,24 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCrearCarga } from '../hooks/useCrearCarga';
 import { CargaLogic } from '../logic/cargaLogic';
 import cargaService from '../services/cargaService';
 import BusquedaPackingList from './BusquedaPackingList';
 import CreacionNuevaCarga from './CreacionNuevaCarga';
-import FormularioPackingList from './FormularioPackingList';
 import TablasDatos from './TablasDatos';
-import './CrearCarga.css';
+import ModalPackingList from './ModalPackingList';
 
 const CrearCarga = () => {
+    const [user, setUser] = useState(null);
+    const [mostrarModalTest, setMostrarModalTest] = useState(false);
+    const [descargandoPDF, setDescargandoPDF] = useState(false);
+
+    // Obtener información del usuario desde localStorage
+    useEffect(() => {
+        const userData = localStorage.getItem('user');
+        if (userData) {
+            setUser(JSON.parse(userData));
+        }
+    }, []);
     // Usar el custom hook para manejar el estado
     const {
         // Estados
@@ -73,6 +83,16 @@ const CrearCarga = () => {
         navigate('/dashboard');
     };
 
+    // Función para cerrar sesión
+    const handleLogout = async () => {
+        try {
+            localStorage.removeItem('user');
+            navigate('/auth');
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error);
+        }
+    };
+
     // Funciones de búsqueda
     const handleBuscarPackingList = () => {
         CargaLogic.buscarPackingList(codigoCarga, busquedaSetters);
@@ -98,11 +118,21 @@ const CrearCarga = () => {
 
     // Funciones de formulario
     const handleMostrarFormulario = () => {
+        console.log('🔄 handleMostrarFormulario llamado - USANDO MODAL DE PRUEBA');
+        console.log('📊 datosExcel:', datosExcel.length);
+        console.log('📁 archivoSeleccionado:', archivoSeleccionado);
+        
+        // Abrir el modal de prueba que funciona
+        setMostrarModalTest(true);
+        console.log('✅ setMostrarModalTest(true) ejecutado');
+        
+        // Luego preparar los datos
         CargaLogic.prepararFormulario(datosExcel, archivoSeleccionado, formularioSetters);
     };
 
     const handleCerrarFormulario = () => {
-        setMostrarFormulario(false);
+        // Cerrar el modal
+        setMostrarModalTest(false);
         // Limpiar estados de guardado exitoso cuando se cierra el formulario
         setGuardadoExitoso(false);
         setDatosGuardado(null);
@@ -117,6 +147,7 @@ const CrearCarga = () => {
     // Función para descargar PDF de QRs
     const handleDescargarPDF = async () => {
         if (datosGuardado && datosGuardado.pdfUrl) {
+            setDescargandoPDF(true);
             try {
                 // Extraer el ID de la carga de la URL
                 const match = datosGuardado.pdfUrl.match(/\/pdf-carga\/(\d+)$/);
@@ -130,6 +161,8 @@ const CrearCarga = () => {
             } catch (error) {
                 console.error('Error al descargar PDF:', error);
                 setError('Error al descargar el PDF. Inténtalo de nuevo.');
+            } finally {
+                setDescargandoPDF(false);
             }
         }
     };
@@ -175,95 +208,137 @@ const CrearCarga = () => {
     };
 
     return (
-        <div className="crear-carga">
-            <h1>Control de Carga</h1>
-            
-            <button onClick={volverAlDashboard}>Volver al Dashboard</button>
-            
+        <>
             <div>
-                {/* Sección de búsqueda */}
-                <BusquedaPackingList
-                    codigoCarga={codigoCarga}
-                    setCodigoCarga={setCodigoCarga}
-                    onBuscar={handleBuscarPackingList}
-                    onLimpiar={limpiarBusqueda}
-                    onVerDetalles={handleVerDetallesPackingList}
-                    busquedaLoading={busquedaLoading}
-                    mostrandoResultados={mostrandoResultados}
-                    resultadosBusqueda={resultadosBusqueda}
-                />
-
-                {/* Sección de creación de nueva carga */}
-                <CreacionNuevaCarga
-                    onDescargarFormato={handleDescargarFormato}
-                    onSubirArchivo={handleUploadClick}
-                    onGuardarCarga={handleGuardarCarga}
-                    onGuardarPackingList={handleMostrarFormulario}
-                    loading={loading}
-                    datosExcel={datosExcel}
-                    codigoCarga={codigoCarga}
-                />
-                
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    accept=".xlsx,.xls"
-                    style={{ display: 'none' }}
-                />
-                
-                {/* Mensajes de error */}
-                {error && (
-                    <div className="error-message">
-                        Error: {error}
-                    </div>
-                )}
-
-                {/* Información del archivo seleccionado */}
-                {archivoSeleccionado && (
+                {/* NAVBAR */}
+                <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', borderBottom: '1px solid #ddd' }}>
                     <div>
-                        <p>
-                            Archivo seleccionado: {archivoSeleccionado.name}
-                            {estadisticasCarga.filasExitosas > 0 && (
-                                <span>
-                                    ✓ {estadisticasCarga.filasExitosas} filas cargadas exitosamente
-                                </span>
-                            )}
-                        </p>
-                        {estadisticasCarga.totalFilas > 0 && (
-                            <div>
-                                Total: {estadisticasCarga.totalFilas} | 
-                                Exitosas: {estadisticasCarga.filasExitosas} | 
-                                Errores: {estadisticasCarga.filasConError} | 
-                                Vacías: {estadisticasCarga.filasVacias}
-                            </div>
-                        )}
+                        <h1 style={{ margin: 0 }}>888 Cargo - Control de Carga</h1>
                     </div>
-                )}
-            </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div>🔔</div>
+                    <div>{user?.name}</div>
+                    <div>👤</div>
+                    <button className="btn btn-danger btn-sm" onClick={handleLogout}>
+                        <i className="fas fa-sign-out-alt"></i>Cerrar Sesión
+                    </button>
+                </div>
+            </nav>
 
-            {/* Tablas de datos */}
-            <TablasDatos
-                datosExcel={datosExcel}
-                filasConError={filasConError}
-            />
-            
-            {/* Formulario de packing list */}
-            <FormularioPackingList
-                mostrarFormulario={mostrarFormulario}
-                infoCliente={infoCliente}
-                infoCarga={infoCarga}
-                onCambioCliente={handleCambioCliente}
-                onCambioCarga={handleCambioCarga}
-                onCerrar={handleCerrarFormulario}
-                onGuardar={handleGuardarEnBD}
-                onGenerarCodigo={handleGenerarNuevoCodigo}
-                guardandoBD={guardandoBD}
-                guardadoExitoso={guardadoExitoso}
-                datosGuardado={datosGuardado}
-                onDescargarPDF={handleDescargarPDF}
-            />
+            {/* CONTENIDO PRINCIPAL */}
+            <div style={{ padding: '20px' }}>
+                <div>
+                    {/* Sección de búsqueda con botón de regreso */}
+                    <div style={{ position: 'relative' }}>
+                        <BusquedaPackingList
+                            codigoCarga={codigoCarga}
+                            setCodigoCarga={setCodigoCarga}
+                            onBuscar={handleBuscarPackingList}
+                            onLimpiar={limpiarBusqueda}
+                            onVerDetalles={handleVerDetallesPackingList}
+                            busquedaLoading={busquedaLoading}
+                            mostrandoResultados={mostrandoResultados}
+                            resultadosBusqueda={resultadosBusqueda}
+                            botonRegreso={
+                                <button 
+                                    className="btn-back-icon" 
+                                    onClick={volverAlDashboard}
+                                    title="Volver al Dashboard"
+                                >
+                                    <i className="fas fa-arrow-left"></i>
+                                </button>
+                            }
+                        />
+                    </div>
+
+                    {/* Sección de creación de nueva carga */}
+                    <CreacionNuevaCarga
+                        onDescargarFormato={handleDescargarFormato}
+                        onSubirArchivo={handleUploadClick}
+                        onGuardarCarga={handleGuardarCarga}
+                        onGuardarPackingList={handleMostrarFormulario}
+                        loading={loading}
+                        datosExcel={datosExcel}
+                        codigoCarga={codigoCarga}
+                    />
+                    
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        accept=".xlsx,.xls"
+                        style={{ display: 'none' }}
+                    />
+                    
+                    {/* Mensajes de error */}
+                    {error && (
+                        <div style={{ 
+                            padding: '10px', 
+                            backgroundColor: '#f8d7da', 
+                            border: '1px solid #f5c6cb', 
+                            borderRadius: '4px', 
+                            color: '#721c24', 
+                            marginBottom: '15px' 
+                        }}>
+                            Error: {error}
+                        </div>
+                    )}
+
+                    {/* Información del archivo seleccionado */}
+                    {archivoSeleccionado && (
+                        <div style={{ 
+                            padding: '10px', 
+                            backgroundColor: '#d1ecf1', 
+                            border: '1px solid #bee5eb', 
+                            borderRadius: '4px', 
+                            color: '#0c5460', 
+                            marginBottom: '15px' 
+                        }}>
+                            <p style={{ margin: '0 0 10px 0' }}>
+                                <strong>Archivo seleccionado:</strong> {archivoSeleccionado.name}
+                                {estadisticasCarga.filasExitosas > 0 && (
+                                    <span style={{ color: '#155724', marginLeft: '10px' }}>
+                                        ✓ {estadisticasCarga.filasExitosas} filas cargadas exitosamente
+                                    </span>
+                                )}
+                            </p>
+                            {estadisticasCarga.totalFilas > 0 && (
+                                <div style={{ fontSize: '14px' }}>
+                                    <strong>Total:</strong> {estadisticasCarga.totalFilas} | 
+                                    <strong> Exitosas:</strong> {estadisticasCarga.filasExitosas} | 
+                                    <strong> Errores:</strong> {estadisticasCarga.filasConError} | 
+                                    <strong> Vacías:</strong> {estadisticasCarga.filasVacias}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Tablas de datos */}
+                <TablasDatos
+                    datosExcel={datosExcel}
+                    filasConError={filasConError}
+                />
+            </div>
         </div>
+
+        {/* Modal de packing list */}
+        <ModalPackingList 
+            mostrar={mostrarModalTest}
+            onCerrar={handleCerrarFormulario}
+            infoCliente={infoCliente}
+            infoCarga={infoCarga}
+            onCambioCliente={handleCambioCliente}
+            onCambioCarga={handleCambioCarga}
+            onGuardar={handleGuardarEnBD}
+            onGenerarCodigo={handleGenerarNuevoCodigo}
+            guardandoBD={guardandoBD}
+            guardadoExitoso={guardadoExitoso}
+            datosGuardado={datosGuardado}
+            onDescargarPDF={handleDescargarPDF}
+            descargandoPDF={descargandoPDF}
+        />
+        </>
     );
 };
 

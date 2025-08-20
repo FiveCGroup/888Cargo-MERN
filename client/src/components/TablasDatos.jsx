@@ -37,6 +37,9 @@ const TablasDatos = ({ datosExcel, filasConError }) => {
                             </tbody>
                         </table>
                     </div>
+                    <div className="tabla-leyenda">
+                        ← Desliza horizontalmente para ver más columnas →
+                    </div>
                 </div>
             )}
 
@@ -148,6 +151,9 @@ const TablasDatos = ({ datosExcel, filasConError }) => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                    <div className="tabla-leyenda">
+                        ← Desliza horizontalmente para ver más columnas →
                     </div>
                 </div>
             )}

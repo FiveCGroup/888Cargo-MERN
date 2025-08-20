@@ -54,10 +54,12 @@ class CargaService {
     async buscarPackingList(codigoCarga) {
         try {
             const response = await API.get(`/api/carga/buscar/${encodeURIComponent(codigoCarga)}`);
-            if (response.data && response.data.length > 0) {
-                return { success: true, data: response.data, mensaje: `Se encontraron ${response.data.length} packing lists` };
+            console.log('🔍 Respuesta del backend:', response.data);
+            
+            if (response.data && response.data.success && response.data.data && response.data.data.length > 0) {
+                return { success: true, data: response.data.data, mensaje: response.data.mensaje || `Se encontraron ${response.data.data.length} packing lists` };
             } else {
-                return { success: false, data: [], mensaje: 'No se encontraron packing lists con ese código' };
+                return { success: false, data: [], mensaje: response.data.mensaje || 'No se encontraron packing lists con ese código' };
             }
         } catch (error) {
             console.error('Error al buscar packing list:', error);

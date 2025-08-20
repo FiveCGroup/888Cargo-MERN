@@ -13,21 +13,16 @@ const CreacionNuevaCarga = ({
         <div>
             <h3>Crear Nuevo Packing List</h3>
             <div>
-                <button onClick={onDescargarFormato} disabled={loading}>
-                    {loading ? 'Descargando...' : 'Descargar formato packing list'}
+                <button className="btn btn-outline" onClick={onDescargarFormato} disabled={loading}>
+                    <i className="fas fa-download"></i>{loading ? 'Descargando...' : 'Descargar formato packing list'}
                 </button>
-                <button onClick={onSubirArchivo} disabled={loading}>
-                    {loading ? 'Procesando...' : 'Subir packing list'}
+                <button className="btn btn-primary" onClick={onSubirArchivo} disabled={loading}>
+                    <i className="fas fa-upload"></i>{loading ? 'Procesando...' : 'Subir packing list'}
                 </button>
                 {datosExcel.length > 0 && (
-                    <>
-                        <button onClick={onGuardarCarga} disabled={loading || !codigoCarga}>
-                            {loading ? 'Guardando...' : 'Guardar Carga (Antigua estructura)'}
-                        </button>
-                        <button onClick={onGuardarPackingList} disabled={loading}>
-                            Guardar como Packing List
-                        </button>
-                    </>
+                    <button className="btn btn-success" onClick={onGuardarPackingList} disabled={loading}>
+                        <i className="fas fa-save"></i>Guardar como Packing List
+                    </button>
                 )}
             </div>
         </div>

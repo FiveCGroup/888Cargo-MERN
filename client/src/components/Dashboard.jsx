@@ -54,73 +54,67 @@ const Dashboard = () => {
 
     return (
         <div>
-            <nav>
+            <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', borderBottom: '1px solid #ddd' }}>
                 <div>
-                    <div>888 Cargo</div>
+                    <h1 style={{ margin: 0 }}>888 Cargo</h1>
                 </div>
-                <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div>🔔</div>
                     <div>{user?.name}</div>
                     <div>👤</div>
-                    <button onClick={handleLogout}>Cerrar Sesión</button>
+                    <button className="btn btn-danger btn-sm" onClick={handleLogout}>
+                        <i className="fas fa-sign-out-alt"></i>Cerrar Sesión
+                    </button>
                 </div>
             </nav>
 
             {/* CONTENIDO PRINCIPAL */}
-            <div>
-                {/* COLUMNA IZQUIERDA */}
+            <div style={{ padding: '20px' }}>
                 <div>
                     <h2>Hola, {user?.name}</h2>
                     <h1>Soluciones de Logística y Transporte</h1>
                 </div>
 
-                {/* COLUMNA DERECHA - CARDS */}
-                <div>
-                    <div>
-                        <div>
-                            <button                                 
-                                //onClick={goToCrearCarga}
-                            >
-                                <span></span>
-                                Cotiza tu envío
-                            </button>
-                        </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginTop: '20px' }}>
+                    <button 
+                        className="btn btn-outline"                               
+                        //onClick={goToCrearCarga}
+                    >
+                        <i className="fas fa-calculator"></i>
+                        Cotiza tu envío
+                    </button>
 
-                        <div>
-                            <button                                 
-                                onClick={goToCrearCarga}
-                            >
-                                <span></span>
-                                Crear carga
-                            </button>
-                        </div>
-                        
-                        <div>
-                            <button                                 
-                                //onClick={goToCrearCarga}
-                            >
-                                <span></span>
-                                Control de carga
-                            </button>
-                        </div>
-                        <div>
-                            <button                                 
-                                // onClick={goToCrearCarga}
-                            >
-                                <span></span>
-                                Locker
-                            </button>
-                        </div>                        
-                        
-                        <div>
-                            <button                                 
-                                onClick={goToQRScanner}
-                            >
-                                <span>📷</span>
-                                Escanear código QR
-                            </button>
-                        </div>
-                    </div>
+                    <button 
+                        className="btn btn-primary"                                
+                        onClick={goToCrearCarga}
+                    >
+                        <i className="fas fa-plus-circle"></i>
+                        Crear carga
+                    </button>
+                    
+                    <button 
+                        className="btn btn-outline"                                
+                        //onClick={goToCrearCarga}
+                    >
+                        <i className="fas fa-clipboard-list"></i>
+                        Control de carga
+                    </button>
+                    
+                    <button 
+                        className="btn btn-outline"                                
+                        // onClick={goToCrearCarga}
+                    >
+                        <i className="fas fa-lock"></i>
+                        Locker
+                    </button>
+                    
+                    <button 
+                        className="btn btn-secondary"                                
+                        onClick={goToQRScanner}
+                    >
+                        <i className="fas fa-qrcode"></i>
+                        Escanear código QR
+                    </button>
                 </div>
             </div>
         </div>
