@@ -8,8 +8,8 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
-// Configuración de SQLite
-const dbPath = path.join(__dirname, '..', 'database', 'app.db');
+// Configuración de SQLite - Base de datos en carpeta db separada
+const dbPath = path.join(__dirname, '..', 'db', 'packing_list.db');
 
 // Crear la base de datos SQLite
 const db = new sqlite3.Database(dbPath, (err) => {

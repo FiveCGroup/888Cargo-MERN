@@ -107,6 +107,9 @@ Una aplicación completa MERN (MongoDB/SQLite + Express + React + Node.js) para 
 │   │   ├── pages/      # Páginas de la aplicación
 │   │   └── services/   # Servicios para API calls
 │   └── package.json
+├── db/
+│   ├── packing_list.db # Base de datos SQLite principal
+│   └── README.md       # Documentación de base de datos
 ├── uploads/
 │   └── images/         # Imágenes extraídas de Excel
 └── package.json
