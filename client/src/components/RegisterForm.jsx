@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import API from "../services/api";
-import "./CountryCodeDropdown.css";
+import "../styles/components/CountryCodeDropdown.css";
 
 const countryCodes = [
   { code: "+1", country: "Estados Unidos (USA)" },

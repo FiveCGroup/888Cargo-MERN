@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import API from '../services/api';
 import { useNavigate } from 'react-router-dom';
-import './Dashboard.css'; // Asegúrate de importar los estilos
+import '../styles/components/Dashboard.css'; // Estilos del Dashboard
 
 const Dashboard = () => {
     const [user, setUser] = useState(null);

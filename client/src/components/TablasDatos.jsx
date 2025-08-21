@@ -1,6 +1,6 @@
 import React from 'react';
 import { obtenerUrlImagen } from '../utils/cargaUtils';
-import './TablasDatos.css';
+import '../styles/components/TablasDatos.css';
 
 const TablasDatos = ({ datosExcel, filasConError }) => {
     return (

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import RegisterForm from "../components/RegisterForm";
 import LoginForm from "../components/LoginForm";
-import "./Auth.css"; 
+import "../styles/pages/Auth.css"; 
 import API from "../services/api";
 
 const AuthPage = () => {

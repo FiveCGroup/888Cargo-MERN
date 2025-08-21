@@ -1,0 +1,318 @@
+/* Estilos para CrearCarga - Refactorizado */
+
+/* Contenedor principal */
+.crear-carga {
+  font-family: inherit;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  padding: var(--spacing-lg);
+  margin: 0;
+  min-height: 100%;
+}
+
+/* Headers */
+.crear-carga h1,
+.crear-carga h2,
+.crear-carga h3,
+.crear-carga h4 {
+  color: var(--text-primary);
+  margin: var(--spacing-lg) 0 var(--spacing-md) 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.crear-carga h1 {
+  font-size: var(--font-size-xxxl);
+  border-bottom: 2px solid var(--color-primary);
+  padding-bottom: var(--spacing-sm);
+}
+
+.crear-carga h2 {
+  font-size: var(--font-size-xxl);
+  color: var(--text-secondary);
+}
+
+.crear-carga h3 {
+  font-size: var(--font-size-xl);
+  color: var(--text-secondary);
+}
+
+/* Botones específicos del componente CrearCarga */
+
+.crear-carga .btn-submit {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+  color: var(--text-light);
+}
+
+.crear-carga .btn-submit:hover {
+  background-color: var(--color-success-hover);
+  border-color: var(--color-success-hover);
+}
+
+.crear-carga .btn-cancel {
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: var(--text-light);
+}
+
+.crear-carga .btn-cancel:hover {
+  background-color: var(--color-secondary-hover);
+  border-color: var(--color-secondary-hover);
+}
+
+.crear-carga .btn-upload {
+  background-color: var(--color-info);
+  border-color: var(--color-info);
+  color: var(--text-light);
+}
+
+.crear-carga .btn-upload:hover {
+  background-color: var(--color-info-hover);
+  border-color: var(--color-info-hover);
+}
+
+/* Formularios usando las clases globales */
+.crear-carga .form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.crear-carga .form-section {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.crear-carga .form-section h3 {
+  margin-top: 0;
+  color: var(--color-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: var(--spacing-sm);
+}
+
+.crear-carga label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+}
+
+/* Inputs específicos del componente (heredan estilos globales) */
+
+/* Tablas */
+.crear-carga .table {
+  width: 100%;
+  margin-bottom: var(--spacing-lg);
+  border-collapse: collapse;
+  background-color: var(--bg-primary);
+  border-radius: var(--border-radius-base);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.crear-carga .table th,
+.crear-carga .table td {
+  padding: var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.crear-carga .table th {
+  background-color: var(--bg-secondary);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.crear-carga .table tbody tr:hover {
+  background-color: var(--bg-secondary);
+}
+
+.crear-carga .table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Área de drag and drop para archivos */
+.crear-carga .file-drop-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xxl);
+  text-align: center;
+  background-color: var(--bg-secondary);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  margin-bottom: var(--spacing-lg);
+}
+
+.crear-carga .file-drop-zone:hover {
+  border-color: var(--color-primary);
+  background-color: rgba(73, 80, 87, 0.05);
+}
+
+.crear-carga .file-drop-zone.drag-over {
+  border-color: var(--color-success);
+  background-color: rgba(40, 167, 69, 0.05);
+}
+
+.crear-carga .file-drop-zone .drop-icon {
+  font-size: 3rem;
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-md);
+}
+
+.crear-carga .file-drop-zone .drop-text {
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-sm);
+}
+
+.crear-carga .file-drop-zone .drop-hint {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Lista de archivos subidos */
+.crear-carga .file-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--spacing-lg) 0;
+}
+
+.crear-carga .file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius-base);
+  margin-bottom: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+}
+
+.crear-carga .file-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.crear-carga .file-icon {
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+}
+
+.crear-carga .file-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.crear-carga .file-name {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.crear-carga .file-size {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.crear-carga .file-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* Progress bars para upload */
+.crear-carga .upload-progress {
+  width: 100%;
+  height: 6px;
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius-full);
+  overflow: hidden;
+  margin-top: var(--spacing-sm);
+}
+
+.crear-carga .upload-progress-bar {
+  height: 100%;
+  background-color: var(--color-success);
+  transition: width var(--transition-slow);
+}
+
+/* Estados de carga */
+.crear-carga .loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+}
+
+.crear-carga .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Mensajes de estado específicos del componente */
+
+.crear-carga .status-success {
+  color: var(--color-success);
+  background-color: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-base);
+  margin-bottom: var(--spacing-lg);
+}
+
+.crear-carga .status-error {
+  color: var(--color-danger);
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-base);
+  margin-bottom: var(--spacing-lg);
+}
+
+.crear-carga .status-warning {
+  color: var(--color-warning);
+  background-color: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-base);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .crear-carga {
+    padding: var(--spacing-md);
+  }
+  
+  .crear-carga .form-section {
+    padding: var(--spacing-md);
+  }
+  
+  .crear-carga .table {
+    font-size: var(--font-size-sm);
+  }
+  
+  .crear-carga .file-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  
+  .crear-carga .file-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

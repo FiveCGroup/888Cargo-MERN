@@ -1,173 +1,363 @@
-# 888Cargo MERN Application
+# 888Cargo MERN - Sistema de Gestión de Listas de Empaque
 
-Una aplicación completa MERN (MongoDB/SQLite + Express + React + Node.js) para la gestión de packing lists con procesamiento avanzado de archivos Excel e imágenes.
+## 📋 Descripción
 
-## 🚀 Características Principales
+Sistema completo MERN (MongoDB/SQLite, Express.js, React.js, Node.js) para la gestión de listas de empaque con generación automática de códigos QR, autenticación de usuarios, y gestión segura de archivos.
 
-### ✅ Funcionalidades Implementadas
-- **Sistema de Autenticación**: Login/Register con JWT
-- **Procesamiento de Excel**: Extracción de datos e imágenes con ExcelJS y XLSX
-- **Gestión de Imágenes**: Extracción automática y guardado en sistema de archivos
-- **Base de Datos SQLite**: Esquema completo con usuarios, clientes, cargas y artículos
-- **Auto-completado**: Datos del usuario logueado se completan automáticamente
-- **Gestión de Packing Lists**: Creación y administración completa
-- **Frontend Moderno**: React 18 + Vite
-- **Backend Robusto**: Express + Node.js
+## ✨ Características principales
 
-### 🛠️ Stack Tecnológico
+### 🔐 Sistema de Autenticación
+- Registro y login de usuarios
+- Autenticación JWT con refresh tokens
+- Validación y sanitización de datos
+- Control de acceso basado en roles
 
-**Frontend:**
-- React 18
-- Vite
-- CSS3
-- Axios para API calls
+### 📦 Gestión de Listas de Empaque
+- CRUD completo de listas de empaque
+- Generación automática de códigos QR
+- Gestión de archivos con validación avanzada
+- Audit trail completo
 
-**Backend:**
-- Node.js
-- Express.js
-- SQLite
-- JWT para autenticación
-- Bcrypt para encriptación
+### �️ Seguridad Avanzada
+- Validación de tipos de archivos por magic numbers
+- Sanitización automática de datos de entrada
+- Protección contra inyección SQL y XSS
+- Rate limiting configurable
+- Headers de seguridad
 
-**Librerías Especializadas:**
-- ExcelJS - Procesamiento avanzado de Excel
-- XLSX - Lectura de datos de Excel
-- Multer - Manejo de archivos
+### � Documentación Completa
+- API documentada con Swagger/OpenAPI 3.0
+- Guías de desarrollo detalladas
+- Documentación de arquitectura
+- Ejemplos de uso y testing
 
-## 📊 Esquema de Base de Datos
+## � Instalación y configuración
 
-### Tablas Principales:
-- **users**: Usuarios del sistema
-- **cliente**: Información de clientes
-- **carga**: Metadata de cargas
-- **articulo_packing_list**: Artículos con imágenes
-- **caja**: Información de cajas y dimensiones
-
-## 🔧 Instalación y Configuración
-
-### Prerrequisitos
-- Node.js (v16 o superior)
-- npm o yarn
+### Requisitos previos
+- Node.js 18.x o superior
+- npm 9.x o superior
+- Git
 
 ### Instalación
+```bash
+# Clonar el repositorio
+git clone https://github.com/FiveCGroup/888Cargo-MERN.git
+cd 888Cargo-MERN
 
-1. **Clonar el repositorio**
-   ```bash
-   git clone git@github.com:FiveCGroup/888Cargo-MERN.git
-   cd 888Cargo-MERN
-   ```
+# Instalar dependencias del backend
+cd backend
+npm install
 
-2. **Instalar dependencias del backend**
-   ```bash
-   npm install
-   ```
+# Instalar dependencias del frontend
+cd ../client
+npm install
 
-3. **Instalar dependencias del frontend**
-   ```bash
-   cd client
-   npm install
-   cd ..
-   ```
-
-4. **Configurar variables de entorno**
-   Crear archivo `.env` en la raíz del proyecto:
-   ```env
-   PORT=4000
-   JWT_SECRET=tu_jwt_secret_aqui
-   DB_PATH=./database.sqlite
-   ```
-
-5. **Ejecutar en modo desarrollo**
-   
-   **Backend:**
-   ```bash
-   npm start
-   ```
-   
-   **Frontend (en otra terminal):**
-   ```bash
-   cd client
-   npm run dev
-   ```
-
-## 📁 Estructura del Proyecto
-
-```
-888Cargo-MERN/
-├── backend/
-│   ├── controllers/     # Controladores de rutas
-│   ├── models/         # Modelos de base de datos
-│   ├── routes/         # Definición de rutas
-│   ├── middlewares/    # Middlewares personalizados
-│   ├── libs/           # Utilidades (JWT, etc.)
-│   └── index.js        # Punto de entrada del servidor
-├── client/
-│   ├── src/
-│   │   ├── components/ # Componentes React
-│   │   ├── pages/      # Páginas de la aplicación
-│   │   └── services/   # Servicios para API calls
-│   └── package.json
-├── db/
-│   ├── packing_list.db # Base de datos SQLite principal
-│   └── README.md       # Documentación de base de datos
-├── uploads/
-│   └── images/         # Imágenes extraídas de Excel
-└── package.json
+# Volver al directorio raíz
+cd ..
 ```
 
-## 🔄 Flujo de Procesamiento de Excel
+### Configuración
+Crear un archivo `.env` en el directorio backend:
 
-1. **Carga de Archivo**: Usuario sube archivo Excel
-2. **Extracción de Datos**: XLSX procesa las filas de datos
-3. **Extracción de Imágenes**: ExcelJS extrae imágenes embebidas
-4. **Guardado de Imágenes**: Las imágenes se guardan en `/uploads/images/`
-5. **Procesamiento de Datos**: Se validan y procesan los datos
-6. **Guardado en BD**: Se almacena en SQLite con URLs de imágenes
-7. **Visualización**: Frontend muestra datos e imágenes
+```env
+# Desarrollo
+NODE_ENV=development
+PORT=4000
+HOST=127.0.0.1
 
-## 🖼️ Gestión de Imágenes
+# Base de datos
+DB_TYPE=sqlite
+DB_PATH=./db/packing_list.db
 
-- Las imágenes se extraen automáticamente de archivos Excel
-- Se guardan físicamente en `/uploads/images/`
-- Se generan URLs de acceso público
-- Compatible con formatos PNG y JPEG
-- Manejo de errores robusto
+# JWT
+JWT_SECRET=tu_secreto_jwt_muy_seguro
 
-## 🔐 Autenticación
+# Uploads
+UPLOAD_PATH=./uploads
+MAX_FILE_SIZE=10485760
 
-- JWT tokens para sesiones
-- Contraseñas encriptadas con bcrypt
-- Auto-completado de datos de usuario
-- Protección de rutas sensibles
+# Features
+ENABLE_QR_GENERATION=true
+ENABLE_PDF_GENERATION=true
+ENABLE_WHATSAPP_RECOVERY=true
+ENABLE_AUDIT_LOG=true
+```
 
-## 🚨 Notas Importantes
+### Ejecutar en desarrollo
+```bash
+# Ejecutar backend y frontend simultáneamente
+npm run dev
 
-- Las imágenes no se suben al repositorio por tamaño
-- La base de datos SQLite se crea automáticamente
-- Configurar variables de entorno antes del primer uso
-- El servidor backend debe estar corriendo para el frontend
+# O ejecutar por separado:
+# Backend
+npm run dev:server
 
-## 📝 Documentos de Migración
+# Frontend
+npm run dev:client
+```
 
-- `SQLITE_MIGRATION_COMPLETE.md`: Detalles de migración a SQLite
-- `CAMBIOS_IMAGENES.md`: Documentación de cambios en procesamiento de imágenes
+## 📖 Documentación
+
+### API Documentation
+- **Swagger UI**: [http://localhost:4000/api-docs](http://localhost:4000/api-docs)
+- **OpenAPI Spec**: [http://localhost:4000/api-docs.json](http://localhost:4000/api-docs.json)
+
+### Guías completas
+- [📘 Guía de Desarrollo](./docs/DEVELOPMENT_GUIDE.md)
+- [🏗️ Documentación de Arquitectura](./docs/ARCHITECTURE.md)
+- [🗄️ Configuración de Base de Datos](./LOCAL_POSTGRES_SETUP.md)
+- [☁️ Configuración de Supabase](./SUPABASE_SETUP.md)
+
+## 🏗️ Arquitectura del sistema
+
+### Backend (Node.js/Express)
+```
+├── config/              # Configuraciones del sistema
+│   ├── config.js        # Configuración multi-entorno
+│   └── swagger.config.js # Configuración de documentación API
+├── controllers/         # Controladores HTTP
+├── middlewares/         # Middlewares personalizados
+│   ├── validateToken.js # Validación de JWT
+│   ├── fileValidation.middleware.js # Validación de archivos
+│   └── dataSanitization.middleware.js # Sanitización de datos
+├── models/             # Modelos de datos
+├── repositories/       # Patrón Repository para acceso a datos
+├── routes/             # Definición de rutas de API
+├── services/           # Lógica de negocio
+└── utils/              # Utilidades y helpers
+```
+
+### Frontend (React.js)
+```
+src/
+├── components/         # Componentes reutilizables
+├── pages/             # Páginas principales
+├── services/          # Servicios para comunicación con API
+├── hooks/             # Custom hooks
+└── utils/             # Utilidades del frontend
+```
+
+## 🔧 Tecnologías utilizadas
+
+### Backend
+- **Node.js**: Runtime de JavaScript
+- **Express.js**: Framework web
+- **SQLite/PostgreSQL**: Base de datos
+- **JWT**: Autenticación
+- **Bcrypt**: Hashing de contraseñas
+- **Multer**: Manejo de archivos
+- **Zod**: Validación de esquemas
+- **Swagger**: Documentación de API
+- **File-type**: Detección de tipos de archivo
+- **Validator**: Sanitización de datos
+
+### Frontend
+- **React.js**: Library de UI
+- **Vite**: Build tool
+- **React Router**: Enrutamiento
+- **Axios**: Cliente HTTP
+
+### Base de datos
+- **SQLite**: Para desarrollo local
+- **PostgreSQL**: Para producción
+- **Migraciones**: Versionado de esquema
+
+## �️ Características de seguridad
+
+### Validación y Sanitización
+- **Validación de archivos**: Verificación por magic numbers
+- **Sanitización de datos**: Limpieza automática de entradas
+- **Validación de esquemas**: Usando Zod para type safety
+- **Protección XSS**: Sanitización de HTML
+- **Prevención de inyección SQL**: Prepared statements
+
+### Autenticación y Autorización
+- **JWT Tokens**: Autenticación stateless
+- **Refresh Tokens**: Renovación segura de sesiones
+- **Password Hashing**: Bcrypt con salt rounds
+- **Role-based Access**: Control de acceso por roles
+
+### Headers de Seguridad
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `X-XSS-Protection: 1; mode=block`
+- `Strict-Transport-Security`
+
+## 📊 Features avanzadas
+
+### Generación de QR
+- Códigos QR únicos para cada lista de empaque
+- Generación automática y almacenamiento
+- Integración con listas de empaque
+
+### Gestión de Archivos
+- Validación avanzada de tipos de archivo
+- Límites de tamaño configurables
+- Almacenamiento seguro con nombres únicos
+- Soporte para múltiples formatos
+
+### Audit Trail
+- Registro de todas las operaciones críticas
+- Tracking de cambios en datos
+- Información de IP y user agent
+- Timestamps automáticos
+
+### Multi-entorno
+- Configuración flexible por entorno
+- Variables de entorno para secretos
+- Base de datos configurable (SQLite/PostgreSQL)
+- Features toggleables
+
+## 🧪 Testing
+
+```bash
+# Ejecutar todos los tests
+npm test
+
+# Tests con coverage
+npm run test:coverage
+
+# Tests en modo watch
+npm run test:watch
+```
+
+## 🚀 Deployment
+
+### Preparación para producción
+```bash
+# Instalar dependencias de producción
+npm ci --only=production
+
+# Compilar frontend
+cd client && npm run build
+
+# Configurar variables de entorno
+cp .env.example .env.production
+```
+
+### Docker
+```bash
+# Construir imagen
+docker build -t cargo-app .
+
+# Ejecutar contenedor
+docker run -p 4000:4000 cargo-app
+```
+
+### Variables de entorno de producción
+```env
+NODE_ENV=production
+PORT=4000
+HOST=0.0.0.0
+
+# Base de datos de producción
+DB_TYPE=postgresql
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=cargo_prod
+DB_USER=cargo_user
+DB_PASS=contraseña_segura
+
+# JWT con secreto fuerte
+JWT_SECRET=secreto_muy_seguro_y_largo_para_produccion
+
+# SSL/HTTPS
+HTTPS_ENABLED=true
+SSL_CERT_PATH=/path/to/cert.pem
+SSL_KEY_PATH=/path/to/private-key.pem
+```
+
+## 📈 Endpoints de API
+
+### Autenticación
+- `POST /api/register` - Registro de usuario
+- `POST /api/login` - Inicio de sesión
+- `POST /api/logout` - Cerrar sesión
+- `GET /api/profile` - Perfil del usuario
+
+### Listas de Empaque
+- `GET /api/packing-lists` - Obtener listas
+- `POST /api/packing-lists` - Crear lista
+- `PUT /api/packing-lists/:id` - Actualizar lista
+- `DELETE /api/packing-lists/:id` - Eliminar lista
+
+### QR Codes
+- `GET /api/qr/:id` - Obtener QR por ID
+- `POST /api/qr/generate` - Generar nuevo QR
+
+### Utilidades
+- `GET /api/health` - Estado del sistema
+- `GET /api-docs` - Documentación Swagger
 
 ## 🤝 Contribución
 
-1. Fork el proyecto
-2. Crea una branch para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la branch (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+1. Fork del proyecto
+2. Crear rama feature (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit cambios (`git commit -m 'feat: agregar nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Crear Pull Request
+
+### Convenciones de commits
+- `feat`: nueva funcionalidad
+- `fix`: corrección de bugs
+- `docs`: documentación
+- `style`: formateo
+- `refactor`: refactorización
+- `test`: tests
+- `chore`: mantenimiento
+
+## 📝 Changelog
+
+### v2.0.0 (2024-01-20)
+#### ✨ Nuevas características
+- Sistema de autenticación completo con JWT
+- Validación avanzada de archivos por magic numbers
+- Sanitización automática de datos de entrada
+- Documentación completa con Swagger/OpenAPI 3.0
+- Arquitectura en capas con patrón Repository
+- Middlewares de seguridad avanzados
+
+#### 🛡️ Mejoras de seguridad
+- Protección contra inyección SQL y XSS
+- Headers de seguridad configurados
+- Rate limiting configurable
+- Validación de tipos de archivo real
+
+#### 📚 Documentación
+- Guías completas de desarrollo
+- Documentación de arquitectura detallada
+- Ejemplos de uso y testing
+- API completamente documentada
+
+#### 🏗️ Arquitectura
+- Refactorización completa siguiendo principios SOLID
+- Separación de responsabilidades en capas
+- Patrón Repository para acceso a datos
+- Configuración multi-entorno
+
+### v1.0.0 (2024-01-15)
+- Versión inicial del sistema
+- CRUD básico de listas de empaque
+- Generación de códigos QR
+- Base de datos SQLite
 
 ## 📄 Licencia
 
-Este proyecto está bajo la licencia MIT. Ver `LICENSE` para más detalles.
+Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
 
-## 🆘 Soporte
+## 👥 Equipo
 
-Para soporte o preguntas, contacta al equipo de desarrollo.
+- **Desarrollador Principal**: FiveCGroup
+- **Arquitectura**: Sistema MERN con enfoque en seguridad
+- **Contacto**: [GitHub](https://github.com/FiveCGroup)
+
+## 🔗 Enlaces útiles
+
+- [Documentación API (Swagger)](http://localhost:4000/api-docs)
+- [Guía de Desarrollo](./docs/DEVELOPMENT_GUIDE.md)
+- [Arquitectura del Sistema](./docs/ARCHITECTURE.md)
+- [Issues y Features](https://github.com/FiveCGroup/888Cargo-MERN/issues)
 
 ---
 
-**Desarrollado con ❤️ por el equipo de FiveCGroup**
+**¡Gracias por usar 888Cargo MERN!** 🚀

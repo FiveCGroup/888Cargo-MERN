@@ -110,6 +110,24 @@ export const initializeDatabase = async () => {
       )
     `);
 
+    // Crear tabla users (para autenticación)
+    await run(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE,
+        email TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
+        nombre_cliente TEXT,
+        correo_cliente TEXT,
+        telefono_cliente TEXT,
+        ciudad_cliente TEXT,
+        pais_cliente TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Crear tabla carga (nueva estructura)
     await run(`
       CREATE TABLE IF NOT EXISTS carga (
@@ -192,7 +210,7 @@ export const initializeDatabase = async () => {
       )
     `);
 
-    console.log('✅ Estructura de base de datos lista para Packing List con QR');
+    console.log('✅ Estructura de base de datos lista para Packing List con QR y sistema de usuarios');
   } catch (error) {
     console.error('❌ Error al inicializar la base de datos:', error);
     throw error;
