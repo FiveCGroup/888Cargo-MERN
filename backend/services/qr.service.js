@@ -432,8 +432,10 @@ export class QRService extends BaseService {
                                 qr_id: qr.id_qr,
                                 codigo_unico: qr.codigo_qr,
                                 numero_caja: qr.numero_caja,
+                                total_cajas: qr.total_cajas,
                                 codigo_carga: qr.codigo_carga,
                                 descripcion: qr.descripcion_espanol,
+                                item: qr.ref_art,
                                 timestamp: new Date().toISOString()
                             });
 
@@ -457,7 +459,7 @@ export class QRService extends BaseService {
                             const textY = y + qrSize + 10;
                             doc.fontSize(9)
                                .font('Helvetica-Bold')
-                               .text(`Caja: ${qr.numero_caja}`, x, textY, { 
+                               .text(`Caja: ${qr.numero_caja} de ${qr.total_cajas}`, x, textY, { 
                                    width: qrSize, 
                                    align: 'center' 
                                });
@@ -470,7 +472,7 @@ export class QRService extends BaseService {
                                });
 
                             doc.fontSize(7)
-                               .text(`${qr.codigo_qr.substring(0, 20)}...`, x, textY + 30, { 
+                               .text(`${(qr.ref_art || 'N/A').substring(0, 20)}${(qr.ref_art || '').length > 20 ? '...' : ''}`, x, textY + 30, { 
                                    width: qrSize, 
                                    align: 'center' 
                                });
