@@ -372,7 +372,7 @@ export class QRService extends BaseService {
             const PDFDocument = (await import('pdfkit')).default;
             this.logger.info(`PDFKit importado exitosamente`);
             
-            return new Promise((resolve, reject) => {
+            return new Promise(async (resolve, reject) => {
                 try {
                     this.logger.info(`Creando documento PDF`);
                     const doc = new PDFDocument({ margin: 50 });
@@ -397,82 +397,101 @@ export class QRService extends BaseService {
                        .text(`Total de QRs: ${qrCodes.length}`, { align: 'center' })
                        .moveDown(2);
 
-                    // Configuración de la tabla
-                    const tableTop = doc.y;
-                    const cellHeight = 30;
-                    const colWidths = [60, 120, 80, 80, 150];
-                    const colPositions = [50, 110, 230, 310, 390];
+                    // Configuración del layout: 4 QRs por página en una cuadrícula 2x2
+                    const pageWidth = doc.page.width - 100; // Margen de 50 a cada lado
+                    const pageHeight = doc.page.height - 200; // Margen superior e inferior
+                    const qrSize = 150; // Tamaño del QR
+                    const cols = 2;
+                    const rows = 2;
+                    const qrsPerPage = cols * rows;
+                    
+                    const colWidth = pageWidth / cols;
+                    const rowHeight = pageHeight / rows;
 
-                    // Encabezados de la tabla
-                    doc.fontSize(10)
-                       .font('Helvetica-Bold');
+                    this.logger.info(`Procesando ${qrCodes.length} QRs para el PDF - 4 QRs por página`);
 
-                    const headers = ['ID', 'Código QR', 'Artículo', 'Caja', 'Descripción'];
-                    headers.forEach((header, i) => {
-                        doc.text(header, colPositions[i], tableTop, { width: colWidths[i], align: 'center' });
-                    });
+                    for (let i = 0; i < qrCodes.length; i++) {
+                        const qr = qrCodes[i];
+                        const pageIndex = Math.floor(i / qrsPerPage);
+                        const positionInPage = i % qrsPerPage;
+                        const col = positionInPage % cols;
+                        const row = Math.floor(positionInPage / cols);
 
-                    // Línea separadora
-                    doc.moveTo(50, tableTop + 15)
-                       .lineTo(540, tableTop + 15)
-                       .stroke();
-
-                    // Datos de la tabla
-                    doc.font('Helvetica').fontSize(9);
-                    let currentY = tableTop + 20;
-
-                    this.logger.info(`Procesando ${qrCodes.length} QRs para el PDF`);
-
-                    qrCodes.forEach((qr, index) => {
-                        // Verificar si necesitamos una nueva página
-                        if (currentY > 750) {
+                        // Agregar nueva página si es necesario
+                        if (i > 0 && positionInPage === 0) {
                             doc.addPage();
-                            currentY = 50;
-                            
-                            // Re-escribir encabezados en nueva página
-                            doc.fontSize(10).font('Helvetica-Bold');
-                            headers.forEach((header, i) => {
-                                doc.text(header, colPositions[i], currentY, { width: colWidths[i], align: 'center' });
-                            });
-                            
-                            doc.moveTo(50, currentY + 15)
-                               .lineTo(540, currentY + 15)
-                               .stroke();
-                            
-                            currentY += 20;
-                            doc.font('Helvetica').fontSize(9);
                         }
 
-                        // Datos de la fila
-                        const rowData = [
-                            qr.id_qr?.toString() || '',
-                            qr.codigo_qr?.substring(0, 18) + '...' || '',
-                            qr.id_caja?.toString() || '',
-                            qr.numero_caja?.toString() || '',
-                            (qr.descripcion_espanol || '').substring(0, 20) + '...'
-                        ];
+                        // Calcular posición del QR en la página
+                        const x = 50 + (col * colWidth) + (colWidth - qrSize) / 2;
+                        const y = 150 + (row * rowHeight) + (rowHeight - qrSize - 80) / 2;
 
-                        rowData.forEach((data, i) => {
-                            doc.text(data, colPositions[i], currentY, { 
-                                width: colWidths[i], 
-                                align: i === 0 || i === 2 || i === 3 ? 'center' : 'left',
-                                height: cellHeight
+                        try {
+                            // Generar código QR como buffer de imagen
+                            const qrContent = JSON.stringify({
+                                qr_id: qr.id_qr,
+                                codigo_unico: qr.codigo_qr,
+                                numero_caja: qr.numero_caja,
+                                codigo_carga: qr.codigo_carga,
+                                descripcion: qr.descripcion_espanol,
+                                timestamp: new Date().toISOString()
                             });
-                        });
 
-                        currentY += cellHeight;
+                            const qrImageBuffer = await QRCode.toBuffer(qrContent, {
+                                type: 'png',
+                                width: qrSize,
+                                margin: 1,
+                                color: {
+                                    dark: '#000000',
+                                    light: '#FFFFFF'
+                                }
+                            });
 
-                        // Línea separadora cada 5 filas
-                        if ((index + 1) % 5 === 0) {
-                            doc.moveTo(50, currentY - 5)
-                               .lineTo(540, currentY - 5)
-                               .stroke();
+                            // Insertar imagen QR en el PDF
+                            doc.image(qrImageBuffer, x, y, { 
+                                width: qrSize, 
+                                height: qrSize 
+                            });
+
+                            // Agregar información debajo del QR
+                            const textY = y + qrSize + 10;
+                            doc.fontSize(9)
+                               .font('Helvetica-Bold')
+                               .text(`Caja: ${qr.numero_caja}`, x, textY, { 
+                                   width: qrSize, 
+                                   align: 'center' 
+                               });
+
+                            doc.fontSize(8)
+                               .font('Helvetica')
+                               .text(`${(qr.descripcion_espanol || '').substring(0, 25)}`, x, textY + 15, { 
+                                   width: qrSize, 
+                                   align: 'center' 
+                               });
+
+                            doc.fontSize(7)
+                               .text(`${qr.codigo_qr.substring(0, 20)}...`, x, textY + 30, { 
+                                   width: qrSize, 
+                                   align: 'center' 
+                               });
+
+                        } catch (qrError) {
+                            this.logger.error(`Error generando QR ${i}:`, qrError);
+                            // En caso de error, mostrar mensaje de error en lugar del QR
+                            doc.fontSize(10)
+                               .text('Error generando QR', x, y + qrSize/2, { 
+                                   width: qrSize, 
+                                   align: 'center' 
+                               });
                         }
-                    });
+                    }
 
-                    // Pie de página
+                    // Pie de página en la última página
                     doc.fontSize(8)
-                       .text('Generado por Sistema 888Cargo', 50, 750, { align: 'center' });
+                       .text('Generado por Sistema 888Cargo', 50, doc.page.height - 50, { 
+                           align: 'center', 
+                           width: doc.page.width - 100 
+                       });
 
                     this.logger.info(`Finalizando documento PDF`);
                     // Finalizar el documento

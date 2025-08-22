@@ -363,7 +363,7 @@ export class QRRepository extends BaseRepository {
             INNER JOIN caja c ON q.id_caja = c.id_caja
             INNER JOIN articulo_packing_list a ON c.id_articulo = a.id_articulo
             INNER JOIN carga ON a.id_carga = carga.id_carga
-            WHERE carga.codigo_carga = ?
+            WHERE carga.id_carga = ?
             ORDER BY a.id_articulo, c.numero_caja
         `;
         
